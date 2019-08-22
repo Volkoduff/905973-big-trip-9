@@ -1,9 +1,10 @@
-const events = [`bus`, `check-in`, `drive`, `flight`, `restaurant`, `ship`, `sightseeing`, `taxi`, `train`, `transport`, `trip`];
-const cities = [`Saint Petersburg`, `Moscow`, `Beijing`, `Tbilisi`, `Geneva`, `Chamonix`, `Amsterdam`];
-const sights = [`Ancient Egypt Museum`, `Natural History Museum`, `National Meseum`];
-const restaurants = [`Domenico's`, `Petit Boutary`, `McDonalds`, `KFC`];
-const hotels = [`Redisson`, `Hotel`];
-const text = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus`;
+const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
+const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
+const CITIES = [`Saint Petersburg`, `Moscow`, `Beijing`, `Tbilisi`, `Geneva`, `Chamonix`, `Amsterdam`];
+const SIGHTS = [`Ancient Egypt Museum`, `Natural History Museum`, `National Meseum`];
+const RESTAURANTS = [`Domenico's`, `Petit Boutary`, `McDonalds`, `KFC`];
+const HOTELS = [`Redisson`, `Hotel`];
+const TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus`;
 
 const RandomFn = {
   getRandomStartTime: () => Date.now() + RandomFn.getRandomDayTime() + RandomFn.randomInteger(0, 40 * 60 * 1000),
@@ -14,11 +15,11 @@ const RandomFn = {
   .sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * amount + 1)),
   getRandomBoolean: () => Boolean(Math.round(Math.random())),
   randomInteger: (min, max) => Math.round(min + Math.random() * (max - min)),
-  getRandomSentesesFromText: (maxAmount) => RandomFn.getSeveralRandomElementsFromArray(text.split(`. `), maxAmount).join(`. `).concat(`.`),
+  getRandomSentesesFromText: (maxAmount) => RandomFn.getSeveralRandomElementsFromArray(TEXT.split(`. `), maxAmount).join(`. `).concat(`.`),
   getRandomElementFromArray: (array) => array[Math.floor(Math.random() * array.length)],
 };
 const MockAmount = {
-  OPTIONS: 4,
+  OPTIONS: 3,
   SENTENSES: 3,
   PHOTOS: 4,
   ROUTE_POINTS: 4,
@@ -37,13 +38,13 @@ const EventToPretext = {
   'trip': `Trip to`,
 };
 
-const filterNames = [`everything`, `future`, `past`];
-const menuNames = [`Table`, `Stats`];
+const FILTERNAMES = [`everything`, `future`, `past`];
+const MENUNAMES = [`Table`, `Stats`];
 
 const EventToDestination = {
-  'sightseeing': RandomFn.getRandomElementFromArray(sights),
-  'restaurant': RandomFn.getRandomElementFromArray(restaurants),
-  'check-in': RandomFn.getRandomElementFromArray(hotels),
+  'sightseeing': RandomFn.getRandomElementFromArray(SIGHTS),
+  'restaurant': RandomFn.getRandomElementFromArray(RESTAURANTS),
+  'check-in': RandomFn.getRandomElementFromArray(HOTELS),
 };
 
 const optionId = {
@@ -53,10 +54,10 @@ const optionId = {
   'Choose seats': `seats`,
 };
 export const filterData = {
-  names: filterNames
+  names: FILTERNAMES
 };
 export const menuData = {
-  names: menuNames
+  names: MENUNAMES
 };
 
 export const getRoutePointData = () => ({
@@ -64,14 +65,16 @@ export const getRoutePointData = () => ({
   startTime: RandomFn.getRandomStartTime(),
   endTime: RandomFn.getRandomEndTime(),
   schedule: ``,
+  transferEvents: TRANSFER_EVENTS,
+  activityEvents: ACTIVITY_EVENTS,
   price: RandomFn.randomInteger(2, 150),
-  event: RandomFn.getRandomElementFromArray(events),
+  event: RandomFn.getRandomElementFromArray([...TRANSFER_EVENTS, ...ACTIVITY_EVENTS]),
   eventComparator: (eventType) => EventToPretext[eventType],
-  destination: RandomFn.getRandomElementFromArray(cities),
+  destination: RandomFn.getRandomElementFromArray(CITIES),
   destinationComparator: (eventType) => EventToDestination[eventType],
   description: () => RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
   photos: Array.from({length: MockAmount.PHOTOS}),
-  offers: offerArray.slice(0, RandomFn.randomInteger(0, 2)),
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerArray, MockAmount.OPTIONS),
 });
 
 export const offerArray = [{
