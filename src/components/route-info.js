@@ -1,5 +1,5 @@
-const getMinDate = (data) => new Date(data.map((obj) => obj.date).sort((a, b) => a - b)[0]);
-const destinations = (data) => data.map((obj) => obj.destination);
+const getMinDate = (objects) => new Date(objects.map((obj) => obj.date).sort((a, b) => a - b)[0]);
+const destinations = (objects) => objects.map((obj) => obj.destination);
 
 export const getRouteInfoTemplate = (dataArray) =>
   `<div class="trip-info__main">

@@ -5,6 +5,7 @@ import {getSortTemplate} from './components/sort';
 import {getEventWrapTemplate} from './components/event-wrap';
 import {EventEdit} from './components/event-edit';
 import {Event} from './components/event';
+import {NoPoints} from './components/no-points';
 import {render, deleteElement} from './components/utils';
 import {getRoutePointData, routePointData, filterData, menuData} from './components/data';
 
@@ -12,20 +13,20 @@ const renderTemplate = (container, template, position = `beforeend`) => {
   container.insertAdjacentHTML(position, template);
 };
 
-const renderWrapEventTemplate = (container, data) => {
-  container.insertAdjacentHTML(`beforeend`, getEventWrapTemplate(data));
+const renderWrapEventTemplate = (container, objects) => {
+  container.insertAdjacentHTML(`beforeend`, getEventWrapTemplate(objects));
 };
 
-const renderMenu = (container, data) => {
-  container.insertAdjacentHTML(`afterend`, getMenuTemplate(data));
+const renderMenu = (container, objects) => {
+  container.insertAdjacentHTML(`afterend`, getMenuTemplate(objects));
 };
 
-const renderFilter = (container, data) => {
-  container.insertAdjacentHTML(`beforeend`, getFilterTemplate(data));
+const renderFilter = (container, objects) => {
+  container.insertAdjacentHTML(`beforeend`, getFilterTemplate(objects));
 };
 
-const renderInfo = (container, data) => {
-  container.insertAdjacentHTML(`afterbegin`, getRouteInfoTemplate(data));
+const renderInfo = (container, objects) => {
+  container.insertAdjacentHTML(`afterbegin`, getRouteInfoTemplate(objects));
 };
 
 const controlsContainer = document.querySelector(`.trip-main__trip-controls`);
@@ -41,6 +42,7 @@ renderTemplate(tripEventsContainer, getSortTemplate());
 renderWrapEventTemplate(tripEventsContainer, getRoutePointData());
 
 const eventWrap = document.querySelector(`.trip-events__list`);
+
 const renderRoutePoint = (routPointData, index) => {
   const event = new Event(routPointData);
   const eventEdit = new EventEdit(routPointData, index);
@@ -52,12 +54,25 @@ const renderRoutePoint = (routPointData, index) => {
     }
   };
 
+  // const saveButtonAction = (evt) => {
+  //   evt.preventDefault();
+  //   eventWrap.replaceChild(eventEdit.getElement(), event.getElement());
+  //   removeEventListener(`keydown`, onEscKeyDown);
+  // };
+
   eventEdit.getElement()
   .querySelector(`.event__input`)
   .addEventListener(`focus`, () => {
     removeEventListener(`keydown`, onEscKeyDown);
   });
 
+  eventEdit.getElement()
+  .querySelector(`.event__save-btn`)
+  .addEventListener(`click`, () => {
+    eventWrap.replaceChild(event.getElement(), eventEdit.getElement());
+    removeEventListener(`keydown`, onEscKeyDown);
+  });
+  // currentTarget.form
   eventEdit.getElement()
   .querySelector(`.event__input`)
   .addEventListener(`blur`, () => {
@@ -67,9 +82,9 @@ const renderRoutePoint = (routPointData, index) => {
   eventEdit.getElement()
   .querySelector(`.event__reset-btn`)
   .addEventListener(`click`, () => {
-    // removeEventListener(`keydown`, onEscKeyDown);
     deleteElement(eventEdit.getElement());
     eventEdit.removeElement();
+    deleteEventWrapIfEmpty();
   });
 
   event.getElement()
@@ -87,6 +102,22 @@ const renderRoutePoint = (routPointData, index) => {
   });
 
   render(eventWrap, event.getElement(index), `beforeend`);
+};
+
+const deleteEventWrapIfEmpty = () => {
+  if (eventWrap.children.length === 0) {
+    const tripDays = document.querySelectorAll(`.trip-days`);
+    const sortElements = document.querySelector(`.trip-events__trip-sort`);
+    eventWrap.remove();
+    sortElements.remove();
+    Array.from(tripDays).forEach((day) => day.remove());
+    addNoPointsText();
+  }
+};
+
+const addNoPointsText = () => {
+  const noPoints = new NoPoints();
+  render(tripEventsContainer, noPoints.getElement(), `beforeend`);
 };
 
 routePointData().forEach((routPoint, it) => renderRoutePoint(routPoint, it));
