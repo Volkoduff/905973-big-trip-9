@@ -54,12 +54,6 @@ const renderRoutePoint = (routPointData, index) => {
     }
   };
 
-  // const saveButtonAction = (evt) => {
-  //   evt.preventDefault();
-  //   eventWrap.replaceChild(eventEdit.getElement(), event.getElement());
-  //   removeEventListener(`keydown`, onEscKeyDown);
-  // };
-
   eventEdit.getElement()
   .querySelector(`.event__input`)
   .addEventListener(`focus`, () => {
@@ -67,12 +61,12 @@ const renderRoutePoint = (routPointData, index) => {
   });
 
   eventEdit.getElement()
-  .querySelector(`.event__save-btn`)
-  .addEventListener(`click`, () => {
+  .querySelector(`.event--edit`)
+  .addEventListener(`submit`, () => {
     eventWrap.replaceChild(event.getElement(), eventEdit.getElement());
     removeEventListener(`keydown`, onEscKeyDown);
   });
-  // currentTarget.form
+
   eventEdit.getElement()
   .querySelector(`.event__input`)
   .addEventListener(`blur`, () => {
