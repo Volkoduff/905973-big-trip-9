@@ -3,22 +3,38 @@ import {DaysList} from './../days-list';
 import {EventsList} from './../events-list';
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
+import {NoPoints} from './../no-points';
+import {Sort} from './../sort';
 import {render, unrender} from './../utils';
 
 export class TripController {
   constructor(container, events) {
     this._container = container;
     this._events = events;
+    this._sort = new Sort();
     this._daysList = new DaysList();
     this._dayElement = new DayElement(events);
     this._eventsList = new EventsList();
+    this._noPoints = new NoPoints();
   }
 
   init() {
+    render(this._container, this._sort.getElement());
     render(this._container, this._daysList.getElement());
     render(this._daysList.getElement(), this._dayElement.getElement());
     render(this._dayElement.getElement(), this._eventsList.getElement());
     this._events.forEach((routPoint, it) => this._renderEvent(routPoint, it));
+  }
+
+  _clearEventContainer() {
+    unrender(this._eventsList.getElement());
+    unrender(this._dayElement.getElement());
+    unrender(this._daysList.getElement());
+    unrender(this._sort.getElement());
+  }
+
+  _renderNoEventMessage() {
+    render(this._container, this._noPoints.getElement());
   }
 
   _renderEvent(event, index) {
@@ -56,13 +72,15 @@ export class TripController {
       .addEventListener(`click`, () => {
         unrender(eventEditComponent.getElement());
         eventEditComponent.removeElement();
-        // deleteEventWrapIfEmpty();
+        if (!this._eventsList.getElement().children.length) {
+          this._clearEventContainer();
+          this._renderNoEventMessage();
+        }
       });
 
     eventComponent.getElement()
       .querySelector(`.event__rollup-btn`)
       .addEventListener(`click`, () => {
-        debugger
         this._eventsList.getElement().replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
         addEventListener(`keydown`, onEscKeyDown);
       });
