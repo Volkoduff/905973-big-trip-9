@@ -10,12 +10,13 @@ export const render = (container, element, postition = `beforeend`) => {
       container.prepend(element);
       break;
     case `beforeend`:
+    debugger
       container.append(element);
       break;
   }
 };
 
-export const deleteElement = (element) => {
+export const unrender = (element) => {
   if (element) {
     element.remove();
   }

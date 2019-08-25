@@ -2,9 +2,8 @@ import {getMenuTemplate} from './components/menu';
 import {getFilterTemplate} from './components/filter';
 import {getRouteInfoTemplate} from './components/route-info';
 import {getSortTemplate} from './components/sort';
-import {getEventWrapTemplate} from './components/event-wrap';
-import {EventEdit} from './components/event-edit';
-import {Event} from './components/event';
+import {TripController} from './components/controllers/trip-controller';
+
 import {NoPoints} from './components/no-points';
 import {render, deleteElement} from './components/utils';
 import {getRoutePointData, routePointData, filterData, menuData} from './components/data';
@@ -13,9 +12,9 @@ const renderTemplate = (container, template, position = `beforeend`) => {
   container.insertAdjacentHTML(position, template);
 };
 
-const renderWrapEventTemplate = (container, objects) => {
-  container.insertAdjacentHTML(`beforeend`, getEventWrapTemplate(objects));
-};
+// const renderWrapEventTemplate = (container, objects) => {
+//   container.insertAdjacentHTML(`beforeend`, getEventWrapTemplate(objects));
+// };
 
 const renderMenu = (container, objects) => {
   container.insertAdjacentHTML(`afterend`, getMenuTemplate(objects));
@@ -39,7 +38,7 @@ renderInfo(infoContainer, routePointData());
 
 const tripEventsContainer = document.querySelector(`.trip-events`);
 renderTemplate(tripEventsContainer, getSortTemplate());
-renderWrapEventTemplate(tripEventsContainer, getRoutePointData());
+// renderWrapEventTemplate(tripEventsContainer, getRoutePointData());
 
 const eventWrap = document.querySelector(`.trip-events__list`);
 
@@ -98,6 +97,13 @@ const renderRoutePoint = (routPointData, index) => {
   render(eventWrap, event.getElement(index), `beforeend`);
 };
 
+
+
+const tripController = new TripController(tripEventsContainer, routePointData());
+tripController.init();
+
+
+
 const deleteEventWrapIfEmpty = () => {
   if (eventWrap.children.length === 0) {
     const tripDays = document.querySelectorAll(`.trip-days`);
@@ -114,7 +120,7 @@ const addNoPointsText = () => {
   render(tripEventsContainer, noPoints.getElement(), `beforeend`);
 };
 
-routePointData().forEach((routPoint, it) => renderRoutePoint(routPoint, it));
+// routePointData().forEach((routPoint, it) => renderRoutePoint(routPoint, it));
 
 const getSummOfTextContent = (elementsList) => elementsList.length > 1 ? Array.from(elementsList)
 .map((el) => parseFloat(el.textContent))

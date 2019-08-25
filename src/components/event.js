@@ -1,11 +1,12 @@
-import {createElement} from './utils';
+import {AbstractComponent} from './abstract-conponent';
 
 const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const getHourDifference = (start, end) => new Date(start - end).getHours();
 const getMinuteDifference = (start, end) => new Date(start - end).getMinutes();
 
-export class Event {
+export class Event extends AbstractComponent {
   constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}, index) {
+    super();
     this._event = event;
     this._startTime = startTime;
     this._endTime = endTime;
@@ -16,17 +17,6 @@ export class Event {
     this._destinationComparator = destinationComparator;
     this._element = null;
     this._id = index;
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 
   getTemplate() {

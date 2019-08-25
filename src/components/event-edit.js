@@ -1,10 +1,11 @@
-import {createElement} from './utils';
+import {AbstractComponent} from './abstract-conponent';
 
 const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
-export class EventEdit {
+export class EventEdit extends AbstractComponent {
   constructor({event, photos, startTime, endTime, price, offers, destination, description, eventComparator, destinationComparator, transferEvents, activityEvents}, index) {
+    super();
     this._event = event;
     this._photos = photos;
     this._startTime = startTime;
@@ -19,17 +20,6 @@ export class EventEdit {
     this._activityEvents = activityEvents;
     this._element = null;
     this._id = index;
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 
   getTemplate() {
