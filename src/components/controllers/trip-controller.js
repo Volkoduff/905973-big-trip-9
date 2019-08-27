@@ -1,4 +1,4 @@
-import {DayElement} from './../dayElement.js';
+import {DayElement} from './../day-element';
 import {DaysList} from './../days-list';
 import {EventsList} from './../events-list';
 import {Event} from './../event';
@@ -24,6 +24,42 @@ export class TripController {
     render(this._daysList.getElement(), this._dayElement.getElement());
     render(this._dayElement.getElement(), this._eventsList.getElement());
     this._events.forEach((routPoint, it) => this._renderEvent(routPoint, it));
+
+    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
+  }
+  _onSortClick(evt) {
+
+    if (evt.target.tagName !== `INPUT`) {
+      return;
+    }
+    this._eventsList.getElement().innerHTML = ``;
+
+    switch (evt.target.dataset.sortType) {
+      case `by-event`:
+        this._events.slice()
+          .sort((a, b) => {
+            if (a.event.toLowerCase() < b.event.toLowerCase()) {
+              return -1;
+            }
+            if (a.event.toLowerCase() > b.event.toLowerCase()) {
+              return 1;
+            } else {
+              return 0;
+            }
+          })
+          .forEach((routPoint, it) => this._renderEvent(routPoint, it));
+        break;
+      case `by-time`:
+        this._events.slice()
+          .sort((a, b) => a.startTime - b.startTime)
+          .forEach((routPoint, it) => this._renderEvent(routPoint, it));
+        break;
+      case `by-price`:
+        this._events.slice()
+          .sort((a, b) => a.price - b.price)
+          .forEach((routPoint, it) => this._renderEvent(routPoint, it));
+        break;
+    }
   }
 
   _clearEventContainer() {

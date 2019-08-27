@@ -5,7 +5,7 @@ const getHourDifference = (start, end) => new Date(start - end).getHours();
 const getMinuteDifference = (start, end) => new Date(start - end).getMinutes();
 
 export class Event extends AbstractComponent {
-  constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}, index) {
+  constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}) {
     super();
     this._event = event;
     this._startTime = startTime;
@@ -15,8 +15,6 @@ export class Event extends AbstractComponent {
     this._destination = destination;
     this._eventComparator = eventComparator;
     this._destinationComparator = destinationComparator;
-    this._element = null;
-    this._id = index;
   }
 
   getTemplate() {

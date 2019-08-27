@@ -35,8 +35,8 @@ const getSummOfTextContent = (elementsList) => elementsList.length > 1 ? Array.f
 const getMoneySummToMarkup = () => {
   const mainPrices = document.querySelectorAll(`.event__price-value`);
   const offerPrices = document.querySelectorAll(`.event__offer-price`);
-  const totalmoneyAmountElement = document.querySelector(`.trip-info__cost-value`);
-  totalmoneyAmountElement.textContent = getSummOfTextContent(mainPrices) + getSummOfTextContent(offerPrices);
+  const totalMoneyAmountElement = document.querySelector(`.trip-info__cost-value`);
+  totalMoneyAmountElement.textContent = getSummOfTextContent(mainPrices) + getSummOfTextContent(offerPrices);
 };
 
 getMoneySummToMarkup();
