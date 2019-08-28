@@ -1,4 +1,3 @@
-import {DayElement} from './../day-element';
 import {DaysList} from './../days-list';
 import {EventsList} from './../events-list';
 import {Event} from './../event';
@@ -6,7 +5,6 @@ import {EventEdit} from './../event-edit';
 import {NoPoints} from './../no-points';
 import {Sort} from './../sort';
 import {render, unrender} from './../utils';
-import {getRoutePointData} from "../data";
 
 export class TripController {
   constructor(container, events) {
@@ -14,28 +12,37 @@ export class TripController {
     this._events = events;
     this._sort = new Sort();
     this._daysList = new DaysList(events);
-    this._dayElement = new DayElement(events);
     this._eventsList = new EventsList();
     this._noPoints = new NoPoints();
+    this._dayIndex = 0;
   }
 
   init() {
     render(this._container, this._sort.getElement());
     render(this._container, this._daysList.getElement());
+    Array.from(this._daysList.getElement().children).map((el) => render(el, this._renderEventList(el)));
+    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt).call());
+  }
 
-    Array.from(this._daysList.getElement().children).map((el) => render(el, this._eventsList.getElement()))
+  _getUniqueDatesArray() {
+    this._sorted = this._events.sort((a, b) => a.startTime - b.startTime);
+    return [...new Set(this._sorted.map((el) => el.startTime))];
+  }
 
-    this._events.forEach((routPoint, it) => this._renderEvent(routPoint, it))
-
-    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
+  _renderEventList(container) {
+    this._eventsList = new EventsList().getElement();
+    this._events
+      .filter((el) => new Date(el.startTime).getDate() === new Date(this._getUniqueDatesArray()[this._dayIndex]).getDate())
+      .forEach((routPoint, it) => this._renderEvent(routPoint, it, container));
+    this._dayIndex++;
+    return this._eventsList;
   }
 
   _onSortClick(evt) {
     if (evt.target.tagName !== `INPUT`) {
       return;
     }
-    this._eventsList.getElement().innerHTML = ``;
-
+    this._eventsList.innerHTML = ``;
     switch (evt.target.dataset.sortType) {
       case `by-event`:
         this._events.slice()
@@ -63,10 +70,8 @@ export class TripController {
     }
   }
 
-  _clearEventContainer() {
-    unrender(this._eventsList.getElement());
-    unrender(this._dayElement.getElement());
-    unrender(this._daysList.getElement());
+  _clearEventContainer(container) {
+    unrender(container);
     unrender(this._sort.getElement());
   }
 
@@ -74,13 +79,14 @@ export class TripController {
     render(this._container, this._noPoints.getElement(this._events));
   }
 
-  _renderEvent(event, index) {
+  _renderEvent(event, index, container) {
     const eventComponent = new Event(event);
     const eventEditComponent = new EventEdit(event, index);
 
     const onEscKeyDown = (evt) => {
+
       if (evt.key === `Escape`) {
-        this._eventsList.getElement().replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
+        this.container.children[1].replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
         document.removeEventListener(`keydown`, onEscKeyDown);
       }
     };
@@ -94,7 +100,7 @@ export class TripController {
     eventEditComponent.getElement()
       .querySelector(`.event--edit`)
       .addEventListener(`submit`, () => {
-        this._eventsList.getElement().replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
+        container.children[1].replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
         removeEventListener(`keydown`, onEscKeyDown);
       });
 
@@ -109,26 +115,29 @@ export class TripController {
       .addEventListener(`click`, () => {
         unrender(eventEditComponent.getElement());
         eventEditComponent.removeElement();
-        if (!this._eventsList.getElement().children.length) {
-          this._clearEventContainer();
-          this._renderNoEventMessage();
+        if (!container.children[1].children.length) {
+          this._clearEventContainer(container);
+        }
+        if (!this._daysList.getElement().children.length) {
+          this._renderNoEventMessage(container);
         }
       });
 
     eventComponent.getElement()
       .querySelector(`.event__rollup-btn`)
       .addEventListener(`click`, () => {
-        this._eventsList.getElement().replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
+        container.children[1].replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
         addEventListener(`keydown`, onEscKeyDown);
       });
 
     eventEditComponent.getElement()
       .querySelector(`.event__rollup-btn`)
       .addEventListener(`click`, () => {
-        this._eventsList.getElement().replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
+        container.children[1].replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
         removeEventListener(`keydown`, onEscKeyDown);
       });
 
-    render(this._eventsList.getElement(), eventComponent.getElement(event, index));
+    render(this._eventsList, eventComponent.getElement(event, index));
   }
+
 }

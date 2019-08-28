@@ -10,7 +10,7 @@ const RandomFn = {
   getRandomStartTime: () => Date.now() + RandomFn.getRandomDayTime() + RandomFn.randomInteger(0, 40 * 60 * 1000),
   getRandomEndTime: () => Date.now() + RandomFn.randomInteger(40 * 60 * 1000, 120 * 60 * 1000),
   getRandomDayTime: () => 1 + Math.floor(Math.random() * 50) * 1000,
-  getRandomWeekTime: () => 1 + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000,
+  getRandomWeekTime: () => 1 + Math.floor(Math.random() * 5) * 24 * 60 * 60 * 1000,
   getSeveralRandomElementsFromArray: (array, amount) => array
   .sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * amount + 1)),
   getRandomBoolean: () => Boolean(Math.round(Math.random())),
@@ -22,7 +22,7 @@ const MockAmount = {
   OPTIONS: 3,
   SENTENSES: 3,
   PHOTOS: 4,
-  ROUTE_POINTS: 4,
+  ROUTE_POINTS: 5,
 };
 const EventToPretext = {
   'bus': `Bus to`,
@@ -61,8 +61,7 @@ export const menuData = {
 };
 
 export const getRoutePointData = () => ({
-  date: Date.now() + RandomFn.getRandomWeekTime(),
-  startTime: RandomFn.getRandomStartTime(),
+  startTime: Date.now() + RandomFn.getRandomWeekTime(),
   endTime: RandomFn.getRandomEndTime(),
   schedule: ``,
   transferEvents: TRANSFER_EVENTS,
