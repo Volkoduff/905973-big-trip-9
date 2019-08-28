@@ -6,13 +6,14 @@ import {EventEdit} from './../event-edit';
 import {NoPoints} from './../no-points';
 import {Sort} from './../sort';
 import {render, unrender} from './../utils';
+import {getRoutePointData} from "../data";
 
 export class TripController {
   constructor(container, events) {
     this._container = container;
     this._events = events;
     this._sort = new Sort();
-    this._daysList = new DaysList();
+    this._daysList = new DaysList(events);
     this._dayElement = new DayElement(events);
     this._eventsList = new EventsList();
     this._noPoints = new NoPoints();
@@ -21,14 +22,15 @@ export class TripController {
   init() {
     render(this._container, this._sort.getElement());
     render(this._container, this._daysList.getElement());
-    render(this._daysList.getElement(), this._dayElement.getElement());
-    render(this._dayElement.getElement(), this._eventsList.getElement());
-    this._events.forEach((routPoint, it) => this._renderEvent(routPoint, it));
+
+    Array.from(this._daysList.getElement().children).map((el) => render(el, this._eventsList.getElement()))
+
+    this._events.forEach((routPoint, it) => this._renderEvent(routPoint, it))
 
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
   }
-  _onSortClick(evt) {
 
+  _onSortClick(evt) {
     if (evt.target.tagName !== `INPUT`) {
       return;
     }
@@ -40,8 +42,7 @@ export class TripController {
           .sort((a, b) => {
             if (a.event.toLowerCase() < b.event.toLowerCase()) {
               return -1;
-            }
-            if (a.event.toLowerCase() > b.event.toLowerCase()) {
+            } else if (a.event.toLowerCase() > b.event.toLowerCase()) {
               return 1;
             } else {
               return 0;
@@ -70,7 +71,7 @@ export class TripController {
   }
 
   _renderNoEventMessage() {
-    render(this._container, this._noPoints.getElement());
+    render(this._container, this._noPoints.getElement(this._events));
   }
 
   _renderEvent(event, index) {
@@ -127,6 +128,7 @@ export class TripController {
         this._eventsList.getElement().replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
         removeEventListener(`keydown`, onEscKeyDown);
       });
+
     render(this._eventsList.getElement(), eventComponent.getElement(event, index));
   }
 }
