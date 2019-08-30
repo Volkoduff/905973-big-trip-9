@@ -82,7 +82,6 @@ export class TripController {
     }
     this._dayIndex = null;
   }
-
   _getEventsInList() {
     this._cleaningForSort();
     this.condition = `no-dates`;
