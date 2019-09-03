@@ -1,15 +1,22 @@
 import {AbstractComponent} from './abstract-conponent';
+import {EventIcon} from './event-icon';
+import {EventPlaceholder} from './event-placeholder';
+import {EventOffers} from './event-offers';
+import {DestinationDescription} from './destination-description';
+import {render, unrender} from './utils';
+
 
 const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, description, eventComparator, destinationComparator, transferEvents, activityEvents}, index) {
+  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents}, index) {
     super();
     this._event = event;
     this._photos = photos;
     this._startTime = startTime;
     this._endTime = endTime;
+    this._destinationOptions = destinationOptions;
     this._price = price;
     this._description = description;
     this._offers = offers;
@@ -18,8 +25,58 @@ export class EventEdit extends AbstractComponent {
     this._destinationComparator = destinationComparator;
     this._transferEvents = transferEvents;
     this._activityEvents = activityEvents;
-    this._element = null;
     this._id = index;
+  }
+
+  _renderPlaceholder() {
+    const placeholderWrap = this.getElement().querySelector(`.event__field-group`);
+    unrender(placeholderWrap.querySelector(`.event__label`));
+    const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
+    render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
+  }
+
+  _markCheckedCheckbox(evt) {
+    [...this.getElement().querySelectorAll(`.event__type-input`)]
+      .forEach((input) => {
+        input.checked = false;
+      });
+    evt.target.checked = true;
+  }
+  _renameInputValuesAccordingCheckedCheckbox(evt) {
+    this._markCheckedCheckbox(evt);
+    this._event = evt.target.value;
+    this.getElement().querySelector(`.event__type-toggle`).value = this._event;
+  }
+  _renderIcon() {
+    const iconWrap = this.getElement().querySelector(`.event__type`);
+    unrender(iconWrap.querySelector(`.event__type-icon`));
+    const eventIcon = new EventIcon(this._event);
+    render(iconWrap, eventIcon.getElement());
+  }
+  _renderOffers() {
+    const offersWrap = this.getElement().querySelector(`.event__section`);
+    unrender(offersWrap.querySelector(`.event__available-offers`));
+    const offers = new EventOffers(this._offers, this._event, this._id);
+    render(offersWrap, offers.getElement());
+  }
+  _renderDescription() {
+    const descriptionWrap = this.getElement().querySelector(`.event__section--destination`);
+    unrender(this.getElement().querySelector(`.event__section-title--destination`));
+    unrender(this.getElement().querySelector(`.event__destination-description`));
+    const description = new DestinationDescription(this._description, this._destination).getElement();
+    render(descriptionWrap, description, `afterbegin`);
+  }
+
+  _onchangeDestination(evt) {
+    this._destination = evt.target.value;
+    this._renderDescription();
+  }
+
+  onClickChangeEventType(evt) {
+    this._renameInputValuesAccordingCheckedCheckbox(evt);
+    this._renderIcon();
+    this._renderPlaceholder();
+    this._renderOffers();
   }
 
   getTemplate() {
@@ -31,35 +88,36 @@ export class EventEdit extends AbstractComponent {
             <span class="visually-hidden">Choose event type</span>
             <img class="event__type-icon" width="17" height="17" src="img/icons/${this._event}.png" alt="Event type icon">
           </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${this._id}" type="checkbox">
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${this._id}" name="event-type" value="${this._event}" type="checkbox">
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Transfer</legend>
               ${this._transferEvents.map((transferEvent) => `<div class="event__type-item">
-                  <input id="event-type-${transferEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${this._event}">
+                  <input id="event-type-${transferEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${transferEvent.toLowerCase()}" 
+                  ${transferEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${transferEvent}" for="event-type-${transferEvent}-${this._id}">${capitalizeFirstLetter(transferEvent)}</label>
                 </div>`).join(``)}
             </fieldset>
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Activity</legend>
               ${this._activityEvents.map((activityEvent) => `<div class="event__type-item">
-                  <input id="event-type-${activityEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${this._event}">
+                  <input id="event-type-${activityEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${activityEvent.toLowerCase()}" 
+                  ${activityEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${activityEvent}" for="event-type-${activityEvent}-${this._id}">${capitalizeFirstLetter(activityEvent)}</label>
                 </div>`).join(``)}
             </fieldset>
           </div>
         </div>
         <div class="event__field-group  event__field-group--destination">
-          <label class="event__label  event__type-output" for="event-destination-${this._id}">
-           ${this._eventComparator(this._event)}
+          <label class="event__label  event__type-output" for="event-destination-${this._id} ${this._destinationComparator(this._event) ? this._destinationComparator(this._event) : this._destination}" list="destination-list-${this._id}">
+           ${this._event !== `sightseeing` ? this._eventComparator(this._event) : this._destinationComparator(this._event)}
           </label>
           <input class="event__input  event__input--destination" id="event-destination-${this._id}"
            type="text" name="event-destination"
-           value="${this._destinationComparator(this._event) ? this._destinationComparator(this._event) : this._destination}" list="destination-list-${this._id}">
+           list="destination-list-${this._id}" 
+           value="${this._destination}">
           <datalist id="destination-list-${this._id}">
-            <option value="Amsterdam"></option>
-            <option value="Geneva"></option>
-            <option value="Chamonix"></option>
+          ${this._destinationOptions.map((option) => `<option value="${option}"></option>`).join(``)}
           </datalist>
         </div>
 
@@ -110,19 +168,26 @@ export class EventEdit extends AbstractComponent {
       <section class="event__details">
           ${this._offers.length > 0 ? `<section class="event__section  event__section--offers">
 <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-<div class="event__available-offers">${this._offers.map((offer) => `
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id(offer.name)}-${this._id}" type="checkbox" name="event-offer-${offer.id(offer.name)}" ${offer.isChecked ? `checked` : ``}>
-              <label class="event__offer-label" for="event-offer-${offer.id(offer.name)}-${this._id}">
-                <span class="event__offer-title">${offer.name}</span>
-                +
-                €&nbsp;<span class="event__offer-price">${offer.price}</span>
-              </label>
-            </div>`).join(``)}
+<div class="event__available-offers">
+${this._offers
+      .filter((offer) => offer.type === this._event)
+      .map((el) => el.offers
+        .map((offer) => `<div class="event__offer-selector">
+              <input class="event__offer-checkbox
+              visually-hidden"
+              id="event-offer-${offer.id(offer.name)}-${this._id}" type="checkbox" name="event-offer-${offer.id(offer.name)}" ${offer.isChecked ? `checked` : ``}>
+<label class="event__offer-label" for="event-offer-${offer.id(offer.name)}-${this._id}">
+  <span class="event__offer-title">${offer.name}</span>
+  +
+  €&nbsp;<span class="event__offer-price">${offer.price}</span>
+  </label>
+  </div>`).join(``))}
         </section>` : ``}
         <section class="event__section  event__section--destination">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">${this._description()}</p>
+          <p class="event__destination-description">${this._description
+      .filter((el) => el.destination === this._destination)
+      .map((el) => el.description)}</p>
           <div class="event__photos-container">
             <div class="event__photos-tape">
             ${Array.from(this._photos).map(() => `<img class="event__photo" src="http://picsum.photos/300/150?r=${Math.random()}" alt="Event photo">`).join(``)}

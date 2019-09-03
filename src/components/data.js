@@ -1,6 +1,6 @@
 const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
 const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
-const CITIES = [`Saint Petersburg`, `Moscow`, `Beijing`, `Tbilisi`, `Geneva`, `Chamonix`, `Amsterdam`];
+const CITIES = [`Saint Petersburg`, `Moscow`, `Beijing`, `Tbilisi`];
 const SIGHTS = [`Ancient Egypt Museum`, `Natural History Museum`, `National Meseum`];
 const RESTAURANTS = [`Domenico's`, `Petit Boutary`, `McDonalds`, `KFC`];
 const HOTELS = [`Redisson`, `Hotel`];
@@ -19,17 +19,17 @@ const RandomFn = {
   getRandomElementFromArray: (array) => array[Math.floor(Math.random() * array.length)],
 };
 const MockAmount = {
-  OPTIONS: 3,
+  OPTIONS: 4,
   SENTENSES: 3,
   PHOTOS: 4,
   ROUTE_POINTS: 5,
 };
 const EventToPretext = {
   'bus': `Bus to`,
-  'check-in': `Check into`,
+  'check-in': `Check-in in`,
   'drive': `Drive to`,
   'flight': `Flight to`,
-  'restaurant': `Meal at`,
+  'restaurant': `Meal in`,
   'ship': `Ship to`,
   'sightseeing': ``,
   'taxi': `Taxi to`,
@@ -70,12 +70,13 @@ export const getRoutePointData = () => ({
   eventComparator: (eventType) => EventToPretext[eventType],
   destination: RandomFn.getRandomElementFromArray(CITIES),
   destinationComparator: (eventType) => EventToDestination[eventType],
-  description: () => RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
+  description: allDescriptions,
   photos: Array.from({length: MockAmount.PHOTOS}),
-  offers: RandomFn.getSeveralRandomElementsFromArray(offerArray, MockAmount.OPTIONS),
+  offers: allOffers,
+  destinationOptions: CITIES,
 });
 
-export const offerArray = [{
+export const offerTransportArray = [{
   name: `Add luggage`,
   price: 10,
   isChecked: RandomFn.getRandomBoolean(),
@@ -96,5 +97,66 @@ export const offerArray = [{
   isChecked: RandomFn.getRandomBoolean(),
   id: (option) => optionId[option],
 }];
+
+const allDescriptions = [{
+  destination: `Saint Petersburg`,
+  description: RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
+},
+{
+  destination: `Moscow`,
+  description: RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
+},
+{
+  destination: `Beijing`,
+  description: RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
+},
+{
+  destination: `Tbilisi`,
+  description: RandomFn.getRandomSentesesFromText(MockAmount.SENTENSES),
+},
+];
+
+const allOffers = [{
+  type: `bus`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `drive`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `flight`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `ship`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `taxi`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `train`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `transport`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `check-in`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `restaurant`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+{
+  type: `sightseeing`,
+  offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
+},
+];
+
 
 export const routePointData = () => Array.from({length: MockAmount.ROUTE_POINTS}, getRoutePointData);

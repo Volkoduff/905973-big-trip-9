@@ -1,12 +1,11 @@
 import {DaysList} from './../days-list';
 import {EventsList} from './../events-list';
 import {Day} from './../day';
-import {Event} from './../event';
 import {RouteInfo} from './../route-info';
-import {EventEdit} from './../event-edit';
-import {NoPoints} from './../no-points';
+
 import {Sort} from './../sort';
 import {render, unrender} from './../utils';
+import {PointController} from "./point-controller";
 
 export class TripController {
   constructor(container, events, infoContainer) {
@@ -16,14 +15,15 @@ export class TripController {
     this._sort = new Sort();
     this._daysList = new DaysList();
     this._eventsList = new EventsList();
-    this._noPoints = new NoPoints();
+
+    this._subscriptions = [];
+    this._onDataChange = this._onDataChange.bind(this);
+    this._onChangeView = this._onChangeView.bind(this);
     this._dayIndex = null;
     this._eventsPerDay = null;
   }
 
   init() {
-    // render(this._container, this._sort.getElement());
-
     this._getEventsPerDayMap(); // ИСПРАВИТЬ!!!!!!!  При генерации мапы изредка происходит глюк и дублируются одинаковые даты
     this._renderDayList();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
@@ -33,7 +33,8 @@ export class TripController {
 
   _getEventsPerDayMap() {
     this._eventsPerDay = new Map();
-    this._getUniqueSortedDates().forEach((date) => this._eventsPerDay.set(date, this._fillMapKeysProperValues(date)));
+    this._getUniqueSortedDates().forEach((date) => this._eventsPerDay
+      .set(date, this._fillMapKeysProperValues(date)));
     return this._eventsPerDay;
   }
   _getDate(ms) {
@@ -71,21 +72,17 @@ export class TripController {
     this._eventsList = new EventsList().getElement();
   }
 
-  _renderSorting() {
-
-  }
-
   _renderDayList() {
     this._sort = new Sort();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
     render(this._container, this._sort.getElement());
     render(this._container, this._daysList.getElement());
-    this._events = this._eventsPerDay;
-    for (let date of this._events.keys()) {
+    // this._events = this._eventsPerDay;
+    for (let date of this._eventsPerDay.keys()) {
       this._dayIndex++;
       this._day = new Day(date, this._dayIndex).getElement(); // создаем новый день и передаем ему ключ(дату)
       this._getEventsPerDays();
-      this._events.get(date).forEach((event) => {
+      this._eventsPerDay.get(date).forEach((event) => {
         this._randomId();
         this._renderEvent(event, this._randomId(), this._day);
       });
@@ -102,7 +99,7 @@ export class TripController {
     render(this._daysList.getElement(), this._day); // Рендерим день в контэйнер
     this._eventsList = new EventsList().getElement();
     this._array = [];
-    for (let events of this._events.values()) {
+    for (let events of this._eventsPerDay.values()) {
       this._array.push(...events);
     }
   }
@@ -122,7 +119,7 @@ export class TripController {
       event.duration = event.endTime - event.startTime;
     });
     this._array
-      .sort((a, b) => new Date(b.duration).getMinutes() - new Date(a.duration).getMinutes())
+      .sort((a, b) => (b.endTime - b.startTime) - (a.endTime - a.startTime))
       .forEach((event) => this._renderEvent(event, this._randomId(), this._day));
     render(this._day, this._eventsList);
   }
@@ -147,73 +144,24 @@ export class TripController {
         break;
     }
   }
-  _renderNoEventMessage() {
-    render(this._container, this._noPoints.getElement(this._events));
+
+  _onDataChange(newData, oldData) {
+    this._events[this._events.findIndex((el) => el === oldData)] = newData;
+    unrender(this._daysList.getElement());
+    this._daysList.removeElement();
+    unrender(this._sort.getElement());
+    this._sort.removeElement();
+    this._getEventsPerDayMap();
+    this._renderDayList();
+  }
+
+  _onChangeView() {
+    this._subscriptions.forEach((it) => it());
   }
 
   _renderEvent(event, index, container) {
-    const eventComponent = new Event(event);
-    const eventEditComponent = new EventEdit(event, index);
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === `Escape`) {
-        container.querySelector(`.trip-events__list`)
-          .replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
-        document.removeEventListener(`keydown`, onEscKeyDown);
-      }
-    };
-
-    eventEditComponent.getElement()
-      .querySelector(`.event__input`)
-      .addEventListener(`focus`, () => {
-        removeEventListener(`keydown`, onEscKeyDown);
-      });
-
-    eventEditComponent.getElement()
-      .querySelector(`.event--edit`)
-      .addEventListener(`submit`, () => {
-        container.querySelector(`.trip-events__list`)
-          .replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
-        removeEventListener(`keydown`, onEscKeyDown);
-      });
-
-    eventEditComponent.getElement()
-      .querySelector(`.event__input`)
-      .addEventListener(`blur`, () => {
-        addEventListener(`keydown`, onEscKeyDown);
-      });
-
-    eventEditComponent.getElement()
-      .querySelector(`.event__reset-btn`)
-      .addEventListener(`click`, () => {
-        unrender(eventEditComponent.getElement());
-        eventEditComponent.removeElement();
-        if (!container.querySelectorAll(`.trip-events__item`).length) {
-          unrender(container);
-        }
-        if (!this._daysList.getElement().children.length) {
-          this._renderNoEventMessage(container);
-          unrender(this._sort.getElement());
-        }
-      });
-
-    eventComponent.getElement()
-      .querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, () => {
-        container.querySelector(`.trip-events__list`)
-          .replaceChild(eventEditComponent.getElement(), eventComponent.getElement());
-        addEventListener(`keydown`, onEscKeyDown);
-      });
-
-    eventEditComponent.getElement()
-      .querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, () => {
-        container.querySelector(`.trip-events__list`)
-          .replaceChild(eventComponent.getElement(), eventEditComponent.getElement());
-        removeEventListener(`keydown`, onEscKeyDown);
-      });
-
-    render(this._eventsList, eventComponent.getElement(event, index));
+    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort);
+    this._subscriptions.push(pointController.setDefaultView.bind(pointController));
   }
 
 }

@@ -24,7 +24,8 @@ export class Event extends AbstractComponent {
         <img class="event__type-icon" width="42" height="42" src="img/icons/${this._event}.png" alt="Event type icon">
       </div>
       <h3 class="event__title">${this._eventComparator(this._event)
-        .concat(` ${this._destinationComparator(this._event) !== undefined ? this._destinationComparator(this._event) : this._destination}`)}</h3>
+        .concat(`${this._event !== `sightseeing` ? `` : this._destinationComparator(this._event)}`)
+      .concat(` ${this._destination}`)}</h3>
       <div class="event__schedule">
         <p class="event__time">
           <time class="event__start-time" datetime="2019-03-18T10:30">${getDateTime(this._startTime)}</time>
@@ -39,11 +40,14 @@ export class Event extends AbstractComponent {
 
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
-      ${this._offers.map((offer) => `<li class="event__offer">
+      ${this._offers
+      .filter((offer) => offer.type === this._event)
+      .map((el) => el.offers
+        .map((offer) => `<li class="event__offer">
                   <span class="event__offer-title">${offer.name}</span>
                   &plus;
                   &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
-                 </li>`).join(``)}
+                 </li>`).join(``))}
       </ul>
 
       <button class="event__rollup-btn" type="button">

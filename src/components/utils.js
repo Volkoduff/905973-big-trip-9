@@ -12,6 +12,12 @@ export const render = (container, element, postition = `beforeend`) => {
     case `beforeend`:
       container.append(element);
       break;
+    case `beforebegin`:
+      container.insertAdjacentHTML(`beforebegin`, element);
+      break;
+    case `afterend`:
+      container.insertAdjacentHTML(`afterend`, element);
+      break;
   }
 };
 
