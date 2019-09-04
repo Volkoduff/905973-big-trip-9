@@ -4,15 +4,19 @@ import {EventPlaceholder} from './event-placeholder';
 import {EventOffers} from './event-offers';
 import {DestinationDescription} from './destination-description';
 import {render, unrender} from './utils';
+import {NoPoints} from "./no-points";
+import moment from "moment";
 
-
-const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
+// const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents}, index) {
+  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort) {
     super();
+    this._noPoints = new NoPoints();
     this._event = event;
+    this._sort = sort;
+    this._container = container;
     this._photos = photos;
     this._startTime = startTime;
     this._endTime = endTime;
@@ -25,6 +29,7 @@ export class EventEdit extends AbstractComponent {
     this._destinationComparator = destinationComparator;
     this._transferEvents = transferEvents;
     this._activityEvents = activityEvents;
+    this._isFavorite = isFavorite;
     this._id = index;
   }
 
@@ -79,6 +84,19 @@ export class EventEdit extends AbstractComponent {
     this._renderOffers();
   }
 
+  onClickDelete() {
+    unrender(this.getElement());
+    this.removeElement();
+    this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
+    if (!this._container.querySelectorAll(`.trip-events__item`).length) {
+      unrender(this._container);
+    }
+    if (!this._daysContainer.children.length) {
+      render(this._daysContainer, this._noPoints.getElement(this._events));
+      unrender(this._sort.getElement());
+    }
+  }
+
   getTemplate() {
     return `<li class="trip-events__item">
     <form class="event  event--edit" action="#" method="post">
@@ -129,7 +147,7 @@ export class EventEdit extends AbstractComponent {
             event__input--time"
            id="event-start-time-${this._id}" type="text"
           name="event-start-time"
-           value="${getDateTime(this._startTime)}">
+           value="${moment(this._startTime).format(`DD.MM.YY hh:mm`)}">
           —
           <label class="visually-hidden" for="event-end-time-${this._id}">
             To
@@ -138,7 +156,7 @@ export class EventEdit extends AbstractComponent {
           id="event-end-time-${this._id}"
           type="text"
           name="event-end-time"
-          value="${getDateTime(this._endTime)}">
+          value="${moment(this._endTime).format(`DD.MM.YY hh:mm`)}">
         </div>
 
         <div class="event__field-group  event__field-group--price">
@@ -152,7 +170,7 @@ export class EventEdit extends AbstractComponent {
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Delete</button>
 
-        <input id="event-favorite-${this._id}" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" checked="">
+        <input id="event-favorite-${this._id}" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${this._isFavorite ? `checked` : ``}>
         <label class="event__favorite-btn" for="event-favorite-${this._id}">
           <span class="visually-hidden">Add to favorite</span>
           <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">

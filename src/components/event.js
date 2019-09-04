@@ -18,9 +18,9 @@ export class Event extends AbstractComponent {
     const start = moment(this._startTime);
     const finish = moment(this._endTime);
     const duration = finish.diff(start) / 60000;
-    let result = null;
+    let result = `Время указано неверно`;
     if (duration > 1139) {
-      result = `${Math.floor(duration / 1140)}D ${Math.floor(duration / 60)}H ${duration % 60}M`;
+      result = `${Math.floor(duration / 1140)}D ${Math.floor(duration % 24)}H ${duration % 60}M`;
     } else if (duration > 59) {
       result = `${Math.floor(duration / 60)}H ${duration % 60}M`;
     } else if (duration < 59) {
@@ -40,9 +40,9 @@ export class Event extends AbstractComponent {
       .concat(` ${this._destination}`)}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="2019-03-18T10:30">${moment(this._startTime).format(`Do hh:mm`)}</time>
+          <time class="event__start-time" datetime="2019-03-18T10:30">${moment(this._startTime).format(`hh:mm`)}</time>
           &mdash;
-          <time class="event__end-time" datetime="2019-03-18T11:00">${moment(this._endTime).format(`Do hh:mm`)}</time>
+          <time class="event__end-time" datetime="2019-03-18T11:00">${moment(this._endTime).format(`hh:mm`)}</time>
         </p>
         <p class="event__duration">${this._getDuration()}</p>
       </div>

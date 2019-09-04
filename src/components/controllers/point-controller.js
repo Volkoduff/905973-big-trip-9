@@ -1,7 +1,8 @@
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
-import {NoPoints} from './../no-points';
-import {render, unrender} from './../utils';
+
+import {render} from './../utils';
+import moment from "moment";
 
 export class PointController {
   constructor(container, events, index, onDataChange, onChangeView, eventsList, sort) {
@@ -13,16 +14,23 @@ export class PointController {
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
     this._eventView = new Event(events);
-    this._noPoints = new NoPoints();
-    this._eventEdit = new EventEdit(events, index);
+    this._eventEdit = new EventEdit(events, index, this._container, this._sort);
     this.init();
+  }
+
+  _offersInputsSync(offers, entry, key) {
+    offers.filter((el) => el.type === entry.event)
+      .map((offersObject) => offersObject.offers
+        .filter((offer) => offer.id(offer.name) === key)
+        .forEach((el) => {
+          el.isChecked = entry[key] !== null;
+        }));
   }
 
   init() {
     const onEscKeyDown = (evt) => {
       if (evt.key === `Escape`) {
-        this._container.querySelector(`.trip-events__list`)
-          .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
+        this._onChangeView();
         document.removeEventListener(`keydown`, onEscKeyDown);
       }
     };
@@ -40,11 +48,13 @@ export class PointController {
       const newEventDataMask = Object.assign({}, this._events);
       const entry = {
         destination: formData.get(`event-destination`),
-        offerSeats: formData.get(`event-offer-seats`),
-        offerMeal: formData.get(`event-offer-meal`),
-        offerToComfort: formData.get(`event-offer-comfort`),
-        offerLuggage: formData.get(`event-offer-luggage`),
+        seats: formData.get(`event-offer-seats`),
+        meal: formData.get(`event-offer-meal`),
+        comfort: formData.get(`event-offer-comfort`),
+        luggage: formData.get(`event-offer-luggage`),
         event: formData.get(`event-type`),
+        startTime: moment(formData.get(`event-start-time`), `DD.MM.YY hh:mm`),
+        endTime: moment(formData.get(`event-end-time`), `DD.MM.YY hh:mm`),
         price: formData.get(`event-price`),
         isFavorite: formData.get(`event-favorite`),
       };
@@ -52,6 +62,9 @@ export class PointController {
         // eslint-disable-next-line guard-for-in
         for (const key in entry) {
           newEventDataMask[key] = entry[key];
+          if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
+            this._offersInputsSync(newEventDataMask.offers, entry, key);
+          }
         }
       }
 
@@ -71,18 +84,7 @@ export class PointController {
 
     this._eventEdit.getElement()
       .querySelector(`.event__reset-btn`)
-      .addEventListener(`click`, () => {
-        unrender(this._eventEdit.getElement());
-        this._eventEdit.removeElement();
-        this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
-        if (!this._container.querySelectorAll(`.trip-events__item`).length) {
-          unrender(this._container);
-        }
-        if (!this._daysContainer.children.length) {
-          this._renderNoEventMessage();
-          unrender(this._sort.getElement());
-        }
-      });
+      .addEventListener(`click`, () => this._eventEdit.onClickDelete());
 
     this._eventView.getElement()
       .querySelector(`.event__rollup-btn`)
@@ -96,8 +98,7 @@ export class PointController {
     this._eventEdit.getElement()
       .querySelector(`.event__rollup-btn`)
       .addEventListener(`click`, () => {
-        this._container.querySelector(`.trip-events__list`)
-          .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
+        this._onChangeView();
         removeEventListener(`keydown`, onEscKeyDown);
       });
 
@@ -108,10 +109,6 @@ export class PointController {
       .forEach((el) => el.addEventListener(`click`, (evt) => this._eventEdit.onClickChangeEventType(evt)));
 
     render(this._eventsList, this._eventView.getElement(event, this._index));
-  }
-
-  _renderNoEventMessage() {
-    render(this._daysContainer, this._noPoints.getElement(this._events));
   }
 
   setDefaultView() {
