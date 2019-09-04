@@ -29,7 +29,8 @@ export class RouteInfo extends AbstractComponent {
         .concat(this._getDestinations().slice(-1)).join(``)}
       </h1>
     <p class="trip-info__dates">
-      ${new Date(Math.min(...this._getDates())).toString().slice(4, 10)}&nbsp;—&nbsp;${new Date(Math.max(...this._getDates())).toString().slice(4, 10)}
+    ${this._getDates().length > 1 ? `${Math.min(...this._getDates())}&nbsp;—&nbsp;${(Math.max(...this._getDates()))}` : this._getDates()}
+      
     </p>
   </div>`;
   }

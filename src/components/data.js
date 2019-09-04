@@ -7,12 +7,11 @@ const HOTELS = [`Redisson`, `Hotel`];
 const TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus`;
 
 const RandomFn = {
-  getRandomStartTime: () => Date.now() + RandomFn.getRandomDayTime() + RandomFn.randomInteger(0, 40 * 60 * 1000),
-  getRandomEndTime: () => Date.now() + RandomFn.randomInteger(40 * 60 * 1000, 120 * 60 * 1000),
-  getRandomDayTime: () => 1 + Math.floor(Math.random() * 50) * 1000,
+  getRandomStartTime: () => Date.now() + Math.floor(Math.random() * 100) * 60 * 1000,
+  getRandomEndTime: () => Date.now() + Math.floor(Math.random() * 24) * 60 * 60 * 1000,
   getRandomWeekTime: () => 1 + Math.floor(Math.random() * 6) * 24 * 60 * 60 * 1000,
   getSeveralRandomElementsFromArray: (array, amount) => array
-  .sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * amount + 1)),
+    .sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * amount + 1)),
   getRandomBoolean: () => Boolean(Math.round(Math.random())),
   randomInteger: (min, max) => Math.round(min + Math.random() * (max - min)),
   getRandomSentesesFromText: (maxAmount) => RandomFn.getSeveralRandomElementsFromArray(TEXT.split(`. `), maxAmount).join(`. `).concat(`.`),
@@ -22,7 +21,7 @@ const MockAmount = {
   OPTIONS: 4,
   SENTENSES: 3,
   PHOTOS: 4,
-  ROUTE_POINTS: 5,
+  ROUTE_POINTS: 4,
 };
 const EventToPretext = {
   'bus': `Bus to`,
@@ -61,7 +60,7 @@ export const menuData = {
 };
 
 export const getRoutePointData = () => ({
-  startTime: Date.now() + RandomFn.getRandomWeekTime(),
+  startTime: RandomFn.getRandomStartTime(),
   endTime: RandomFn.getRandomEndTime(),
   transferEvents: TRANSFER_EVENTS,
   activityEvents: ACTIVITY_EVENTS,

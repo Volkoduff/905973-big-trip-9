@@ -10,6 +10,7 @@ export class PointController {
     this._index = index;
     this._eventsList = eventsList;
     this._sort = sort;
+    this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
     this._eventView = new Event(events);
     this._noPoints = new NoPoints();
@@ -73,11 +74,12 @@ export class PointController {
       .addEventListener(`click`, () => {
         unrender(this._eventEdit.getElement());
         this._eventEdit.removeElement();
+        this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
         if (!this._container.querySelectorAll(`.trip-events__item`).length) {
           unrender(this._container);
         }
-        if (!this._container.parentNode.children.length) {
-          this._renderNoEventMessage(this._container);
+        if (!this._daysContainer.children.length) {
+          this._renderNoEventMessage();
           unrender(this._sort.getElement());
         }
       });
@@ -85,6 +87,7 @@ export class PointController {
     this._eventView.getElement()
       .querySelector(`.event__rollup-btn`)
       .addEventListener(`click`, () => {
+        this._onChangeView();
         this._container.querySelector(`.trip-events__list`)
           .replaceChild(this._eventEdit.getElement(), this._eventView.getElement());
         addEventListener(`keydown`, onEscKeyDown);
@@ -108,12 +111,13 @@ export class PointController {
   }
 
   _renderNoEventMessage() {
-    render(this._container, this._noPoints.getElement(this._events));
+    render(this._daysContainer, this._noPoints.getElement(this._events));
   }
 
   setDefaultView() {
-    if (this._container.getElement().contains(this._eventEdit.getElement())) {
-      this._container.getElement().replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
+    if (this._container.contains(this._eventEdit.getElement())) {
+      this._container.querySelector(`.trip-events__list`)
+        .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
     }
   }
 }

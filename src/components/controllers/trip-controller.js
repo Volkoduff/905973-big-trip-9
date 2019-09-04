@@ -2,10 +2,11 @@ import {DaysList} from './../days-list';
 import {EventsList} from './../events-list';
 import {Day} from './../day';
 import {RouteInfo} from './../route-info';
-
 import {Sort} from './../sort';
+import {NoPoints} from './../no-points';
 import {render, unrender} from './../utils';
 import {PointController} from "./point-controller";
+import moment from "moment";
 
 export class TripController {
   constructor(container, events, infoContainer) {
@@ -15,8 +16,8 @@ export class TripController {
     this._sort = new Sort();
     this._daysList = new DaysList();
     this._eventsList = new EventsList();
-
     this._subscriptions = [];
+    this._noPoints = new NoPoints();
     this._onDataChange = this._onDataChange.bind(this);
     this._onChangeView = this._onChangeView.bind(this);
     this._dayIndex = null;
@@ -24,7 +25,7 @@ export class TripController {
   }
 
   init() {
-    this._getEventsPerDayMap(); // ИСПРАВИТЬ!!!!!!!  При генерации мапы изредка происходит глюк и дублируются одинаковые даты
+    this._getEventsPerDayMap();
     this._renderDayList();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
     this._routeInfo = new RouteInfo(this._eventsPerDay);
@@ -34,7 +35,7 @@ export class TripController {
   _getEventsPerDayMap() {
     this._eventsPerDay = new Map();
     this._getUniqueSortedDates().forEach((date) => this._eventsPerDay
-      .set(date, this._fillMapKeysProperValues(date)));
+      .set(date, this ._fillMapKeysProperValues(date)));
     return this._eventsPerDay;
   }
   _getDate(ms) {
@@ -56,10 +57,10 @@ export class TripController {
   }
 
   _getUniqueSortedDates() {
-    const sortedDates = this._events
+    const sortedTime = this._events
       .sort((a, b) => a.startTime - b.startTime)
-      .map((obj) => obj.startTime);
-    return [...new Set(sortedDates)];
+      .map((obj) => moment(obj.startTime).format(`MMM DD`));
+    return [...new Set(sortedTime)];
   }
   _cleaningForSort() {
     this._sort.getElement().querySelector(`.trip-sort__item--day`).innerHTML = ``;
@@ -77,7 +78,6 @@ export class TripController {
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
     render(this._container, this._sort.getElement());
     render(this._container, this._daysList.getElement());
-    // this._events = this._eventsPerDay;
     for (let date of this._eventsPerDay.keys()) {
       this._dayIndex++;
       this._day = new Day(date, this._dayIndex).getElement(); // создаем новый день и передаем ему ключ(дату)
@@ -112,16 +112,27 @@ export class TripController {
     render(this._day, this._eventsList);
   }
 
-  // ИСПРАВИТЬ!!!!! БАГОВАНАЯ СОРТИРОВКА(СМОТРИ ТЕЛЕГРАМ ПОДСКАЗКИ НАСТАВНИКА)
   _renderSortedEventsByDuration() {
     this._getEventsInList();
-    this._array.map((event) => {
+    this._array.forEach((event) => {
       event.duration = event.endTime - event.startTime;
     });
+
     this._array
-      .sort((a, b) => (b.endTime - b.startTime) - (a.endTime - a.startTime))
+      .sort((a, b) => b.duration - a.duration)
       .forEach((event) => this._renderEvent(event, this._randomId(), this._day));
     render(this._day, this._eventsList);
+  }
+
+  _renderNoEventMessage() {
+    render(this._container, this._noPoints.getElement(this._events));
+  }
+
+  onDeleteCheck() {
+    if (!this._container.parentNode.children.length) {
+      this._renderNoEventMessage(this._container);
+      unrender(this._sort.getElement());
+    }
   }
 
   _onSortClick(evt) {
@@ -156,11 +167,11 @@ export class TripController {
   }
 
   _onChangeView() {
-    this._subscriptions.forEach((it) => it());
+    this._subscriptions.forEach((subscription) => subscription());
   }
 
   _renderEvent(event, index, container) {
-    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort);
+    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck);
     this._subscriptions.push(pointController.setDefaultView.bind(pointController));
   }
 

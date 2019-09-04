@@ -1,8 +1,5 @@
 import {AbstractComponent} from './abstract-conponent';
-
-const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
-const getHourDifference = (start, end) => new Date(start - end).getHours();
-const getMinuteDifference = (start, end) => new Date(start - end).getMinutes();
+import moment from "moment";
 
 export class Event extends AbstractComponent {
   constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}) {
@@ -17,6 +14,21 @@ export class Event extends AbstractComponent {
     this._destinationComparator = destinationComparator;
   }
 
+  _getDuration() {
+    const start = moment(this._startTime);
+    const finish = moment(this._endTime);
+    const duration = finish.diff(start) / 60000;
+    let result = null;
+    if (duration > 1139) {
+      result = `${Math.floor(duration / 1140)}D ${Math.floor(duration / 60)}H ${duration % 60}M`;
+    } else if (duration > 59) {
+      result = `${Math.floor(duration / 60)}H ${duration % 60}M`;
+    } else if (duration < 59) {
+      result = `${duration}M`;
+    }
+    return result;
+  }
+
   getTemplate() {
     return `<li class="trip-events__item">
     <div class="event">
@@ -28,11 +40,11 @@ export class Event extends AbstractComponent {
       .concat(` ${this._destination}`)}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="2019-03-18T10:30">${getDateTime(this._startTime)}</time>
+          <time class="event__start-time" datetime="2019-03-18T10:30">${moment(this._startTime).format(`Do hh:mm`)}</time>
           &mdash;
-          <time class="event__end-time" datetime="2019-03-18T11:00">${getDateTime(this._endTime)}</time>
+          <time class="event__end-time" datetime="2019-03-18T11:00">${moment(this._endTime).format(`Do hh:mm`)}</time>
         </p>
-        <p class="event__duration">${getHourDifference(this._startTime, this._endTime)}H ${getMinuteDifference(this._startTime, this._endTime)}M</p>
+        <p class="event__duration">${this._getDuration()}</p>
       </div>
       <p class="event__price">
         &euro;&nbsp;<span class="event__price-value">${this._price}</span>
