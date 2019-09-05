@@ -55,6 +55,7 @@ export class Event extends AbstractComponent {
       ${this._offers
       .filter((offer) => offer.type === this._event)
       .map((el) => el.offers
+        .filter((offer) => offer.isChecked === true)
         .map((offer) => `<li class="event__offer">
                   <span class="event__offer-title">${offer.name}</span>
                   &plus;

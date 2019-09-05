@@ -58,12 +58,14 @@ export class PointController {
         price: formData.get(`event-price`),
         isFavorite: formData.get(`event-favorite`),
       };
+
       if (typeof entry === `object`) {
         // eslint-disable-next-line guard-for-in
         for (const key in entry) {
           newEventDataMask[key] = entry[key];
           if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
             this._offersInputsSync(newEventDataMask.offers, entry, key);
+            delete newEventDataMask[key];
           }
         }
       }
