@@ -56,6 +56,7 @@ export class EventEdit extends AbstractComponent {
     this._event = evt.target.value;
     this.getElement().querySelector(`.event__type-toggle`).value = this._event;
   }
+
   _renderIcon() {
     const iconWrap = this.getElement().querySelector(`.event__type`);
     unrender(iconWrap.querySelector(`.event__type-icon`));
