@@ -1,8 +1,6 @@
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
-
 import {render} from './../utils';
-import moment from "moment";
 
 export class PointController {
   constructor(container, events, index, onDataChange, onChangeView, eventsList, sort) {
@@ -53,12 +51,11 @@ export class PointController {
         comfort: formData.get(`event-offer-comfort`),
         luggage: formData.get(`event-offer-luggage`),
         event: formData.get(`event-type`),
-        startTime: moment(formData.get(`event-start-time`), `DD.MM.YY hh:mm`),
-        endTime: moment(formData.get(`event-end-time`), `DD.MM.YY hh:mm`),
+        startTime: formData.get(`event-start-time`),
+        endTime: formData.get(`event-end-time`),
         price: formData.get(`event-price`),
         isFavorite: formData.get(`event-favorite`),
       };
-
       if (typeof entry === `object`) {
         // eslint-disable-next-line guard-for-in
         for (const key in entry) {

@@ -5,6 +5,9 @@ import {EventOffers} from './event-offers';
 import {DestinationDescription} from './destination-description';
 import {render, unrender} from './utils';
 import {NoPoints} from "./no-points";
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
+import "flatpickr/dist/themes/light.css";
 import moment from "moment";
 
 // const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
@@ -31,6 +34,7 @@ export class EventEdit extends AbstractComponent {
     this._activityEvents = activityEvents;
     this._isFavorite = isFavorite;
     this._id = index;
+    this.init();
   }
 
   _renderPlaceholder() {
@@ -97,6 +101,21 @@ export class EventEdit extends AbstractComponent {
     }
   }
 
+  init() {
+    [...this.getElement().querySelectorAll(`.event__input--time`)]
+      .forEach((input) => flatpickr(input, {
+        altInput: true,
+        altFormat: `d.j.Y H:i`,
+        allowInput: false,
+        defaultDate: this._event.dueDate,
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        minuteIncrement: 1,
+        dateFormat: `Y-m-d H:i`, // Формат входящей даты
+      }));
+  }
+
   getTemplate() {
     return `<li class="trip-events__item">
     <form class="event  event--edit" action="#" method="post">
@@ -111,7 +130,7 @@ export class EventEdit extends AbstractComponent {
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Transfer</legend>
               ${this._transferEvents.map((transferEvent) => `<div class="event__type-item">
-                  <input id="event-type-${transferEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${transferEvent.toLowerCase()}" 
+                  <input id="event-type-${transferEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${transferEvent.toLowerCase()}"
                   ${transferEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${transferEvent}" for="event-type-${transferEvent}-${this._id}">${capitalizeFirstLetter(transferEvent)}</label>
                 </div>`).join(``)}
@@ -119,7 +138,7 @@ export class EventEdit extends AbstractComponent {
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Activity</legend>
               ${this._activityEvents.map((activityEvent) => `<div class="event__type-item">
-                  <input id="event-type-${activityEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${activityEvent.toLowerCase()}" 
+                  <input id="event-type-${activityEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${activityEvent.toLowerCase()}"
                   ${activityEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${activityEvent}" for="event-type-${activityEvent}-${this._id}">${capitalizeFirstLetter(activityEvent)}</label>
                 </div>`).join(``)}
@@ -132,7 +151,7 @@ export class EventEdit extends AbstractComponent {
           </label>
           <input class="event__input  event__input--destination" id="event-destination-${this._id}"
            type="text" name="event-destination"
-           list="destination-list-${this._id}" 
+           list="destination-list-${this._id}"
            value="${this._destination}">
           <datalist id="destination-list-${this._id}">
           ${this._destinationOptions.map((option) => `<option value="${option}"></option>`).join(``)}
@@ -147,7 +166,7 @@ export class EventEdit extends AbstractComponent {
             event__input--time"
            id="event-start-time-${this._id}" type="text"
           name="event-start-time"
-           value="${moment(this._startTime).format(`DD.MM.YY hh:mm`)}">
+           value="${moment(this._startTime).format(`YYYY-MM-DD HH:mm`)}">
           —
           <label class="visually-hidden" for="event-end-time-${this._id}">
             To
@@ -156,7 +175,7 @@ export class EventEdit extends AbstractComponent {
           id="event-end-time-${this._id}"
           type="text"
           name="event-end-time"
-          value="${moment(this._endTime).format(`DD.MM.YY hh:mm`)}">
+          value="${moment(this._endTime).format(`YYYY-MM-DD HH:mm`)}">
         </div>
 
         <div class="event__field-group  event__field-group--price">
