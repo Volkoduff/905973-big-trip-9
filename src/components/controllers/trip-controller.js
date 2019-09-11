@@ -28,8 +28,20 @@ export class TripController {
     this._getEventsPerDayMap();
     this._renderDayList();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
+    this._renderRouteInfo();
+  }
+
+  _renderRouteInfo() {
     this._routeInfo = new RouteInfo(this._eventsPerDay);
     render(this._infoContainer, this._routeInfo.getElement(), `afterbegin`);
+  }
+
+  hide() {
+    this._container.classList.add(`visually-hidden`);
+  }
+
+  show() {
+    this._container.classList.remove(`visually-hidden`);
   }
 
   _getEventsPerDayMap() {
@@ -124,25 +136,26 @@ export class TripController {
     render(this._day, this._eventsList);
   }
 
-  _renderNoEventMessage() {
-    render(this._container, this._noPoints.getElement(this._events));
-  }
-
   onDeleteCheck() {
-    if (!this._container.parentNode.children.length) {
-      this._renderNoEventMessage(this._container);
+    debugger
+    if (!this._events.length) {
+      render(this._container, this._noPoints.getElement(this._events));
       unrender(this._sort.getElement());
     }
+    // if (!this._container.parentNode.children.length) {
+    //   this._renderNoEventMessage(this._container);
+    //   unrender(this._sort.getElement());
+    // }
   }
 
   _onSortClick(evt) {
     if (evt.target.tagName !== `INPUT`) {
       return;
     }
-    unrender(this._daysList.getElement());
+    unrender(this._daysList.getElement()); // Создается видимо несколько sort, избыточное создание где-то (Нужно отрефакторить)
     this._daysList.removeElement();
     unrender(this._sort.getElement());
-    this._sort.removeElement();
+    // this._sort.removeElement();
     switch (evt.target.dataset.sortType) {
       case `by-event`:
         this._renderDayList();
@@ -157,13 +170,21 @@ export class TripController {
   }
 
   _onDataChange(newData, oldData) {
+    const index = this._events.findIndex((event) => event === oldData);
+    if (newData === null) {
+      this._events = [...this._events.slice(0, index), ...this._events.slice(index + 1)];
+    }
     this._events[this._events.findIndex((el) => el === oldData)] = newData;
+
     unrender(this._daysList.getElement());
     this._daysList.removeElement();
     unrender(this._sort.getElement());
     this._sort.removeElement();
     this._getEventsPerDayMap();
     this._renderDayList();
+    unrender(this._routeInfo.getElement());
+    this._routeInfo.removeElement();
+    this._renderRouteInfo();
   }
 
   _onChangeView() {
@@ -171,7 +192,7 @@ export class TripController {
   }
 
   _renderEvent(event, index, container) {
-    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck);
+    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this));
     this._subscriptions.push(pointController.setDefaultView.bind(pointController));
   }
 

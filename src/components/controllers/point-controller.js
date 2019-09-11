@@ -1,28 +1,25 @@
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
-import {render} from './../utils';
+import {render, unrender} from './../utils';
+
+export const Mode = {
+  ADDING: `adding`,
+  DEFAULT: `default`,
+};
 
 export class PointController {
-  constructor(container, events, index, onDataChange, onChangeView, eventsList, sort) {
+  constructor(container, events, index, onDataChange, onChangeView, eventsList, sort, onDeleteCheck) {
     this._container = container;
     this._events = events;
     this._index = index;
+    this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
     this._sort = sort;
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
     this._eventView = new Event(events);
-    this._eventEdit = new EventEdit(events, index, this._container, this._sort);
+    this._eventEdit = new EventEdit(events, index, this._container, this._sort, this._onDataChange);
     this.init();
-  }
-
-  _offersInputsSync(offers, entry, key) {
-    offers.filter((el) => el.type === entry.event)
-      .map((offersObject) => offersObject.offers
-        .filter((offer) => offer.id(offer.name) === key)
-        .forEach((el) => {
-          el.isChecked = entry[key] !== null;
-        }));
   }
 
   init() {
@@ -66,10 +63,20 @@ export class PointController {
           }
         }
       }
-
       this._onDataChange(newEventDataMask, this._events);
       removeEventListener(`keydown`, onEscKeyDown);
     };
+
+    const onDeleteDataChange = (evt) => {
+      evt.preventDefault();
+      this._onDataChange(null, this._events);
+      onSubmitDataChange(evt);
+      this._onDeleteCheck();
+    };
+
+    this._eventEdit.getElement()
+      .querySelector(`.event__reset-btn`)
+      .addEventListener(`click`, onDeleteDataChange);
 
     this._eventEdit.getElement()
       .querySelector(`.event--edit`)
@@ -80,10 +87,6 @@ export class PointController {
       .addEventListener(`blur`, () => {
         addEventListener(`keydown`, onEscKeyDown);
       });
-
-    this._eventEdit.getElement()
-      .querySelector(`.event__reset-btn`)
-      .addEventListener(`click`, () => this._eventEdit.onClickDelete());
 
     this._eventView.getElement()
       .querySelector(`.event__rollup-btn`)
@@ -108,6 +111,15 @@ export class PointController {
       .forEach((el) => el.addEventListener(`click`, (evt) => this._eventEdit.onClickChangeEventType(evt)));
 
     render(this._eventsList, this._eventView.getElement(event, this._index));
+  }
+
+  _offersInputsSync(offers, entry, key) {
+    offers.filter((el) => el.type === entry.event)
+      .map((offersObject) => offersObject.offers
+        .filter((offer) => offer.id(offer.name) === key)
+        .forEach((el) => {
+          el.isChecked = entry[key] !== null;
+        }));
   }
 
   setDefaultView() {

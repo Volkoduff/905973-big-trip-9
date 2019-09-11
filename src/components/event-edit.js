@@ -14,7 +14,7 @@ import moment from "moment";
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort) {
+  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort, onChangeSubmit) {
     super();
     this._noPoints = new NoPoints();
     this._event = event;
@@ -34,6 +34,7 @@ export class EventEdit extends AbstractComponent {
     this._activityEvents = activityEvents;
     this._isFavorite = isFavorite;
     this._id = index;
+    this._onChangeSubmit = onChangeSubmit;
     this.init();
   }
 
@@ -88,19 +89,20 @@ export class EventEdit extends AbstractComponent {
     this._renderPlaceholder();
     this._renderOffers();
   }
-
-  onClickDelete() {
-    unrender(this.getElement());
-    this.removeElement();
-    this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
-    if (!this._container.querySelectorAll(`.trip-events__item`).length) {
-      unrender(this._container);
-    }
-    if (!this._daysContainer.children.length) {
-      render(this._daysContainer, this._noPoints.getElement(this._events));
-      unrender(this._sort.getElement());
-    }
-  }
+  //
+  // onClickDelete() {
+  //   // this._onChangeSubmit(null, this);
+  //   unrender(this.getElement());
+  //   this.removeElement();
+  //   this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
+  //   if (!this._container.querySelectorAll(`.trip-events__item`).length) {
+  //     unrender(this._container);
+  //   }
+  //   if (!this._daysContainer.children.length) {
+  //     render(this._daysContainer, this._noPoints.getElement(this._events));
+  //     unrender(this._sort.getElement());
+  //   }
+  // }
 
   init() {
     [...this.getElement().querySelectorAll(`.event__input--time`)]
