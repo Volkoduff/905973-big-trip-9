@@ -1,11 +1,11 @@
 import {AbstractComponent} from './abstract-conponent';
 
 export class EventOffers extends AbstractComponent {
-  constructor(offers, event, index) {
+  constructor(event, {_offers, _index}) {
     super();
-    this._offers = offers;
-    this._id = index;
     this._event = event;
+    this._offers = _offers;
+    this._id = _index;
   }
 
   getTemplate() {

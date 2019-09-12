@@ -1,20 +1,15 @@
 import {AbstractComponent} from './abstract-conponent';
-import {EventIcon} from './event-icon';
-import {EventPlaceholder} from './event-placeholder';
-import {EventOffers} from './event-offers';
-import {DestinationDescription} from './destination-description';
-import {render, unrender} from './utils';
+import {EventRenderUtils} from './event-render-utils';
 import {NoPoints} from "./no-points";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/light.css";
 import moment from "moment";
 
-// const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort, onChangeSubmit) {
+  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort) {
     super();
     this._noPoints = new NoPoints();
     this._event = event;
@@ -34,75 +29,68 @@ export class EventEdit extends AbstractComponent {
     this._activityEvents = activityEvents;
     this._isFavorite = isFavorite;
     this._id = index;
-    this._onChangeSubmit = onChangeSubmit;
+    this._eventRenderUtils = new EventRenderUtils();
     this.init();
   }
 
-  _renderPlaceholder() {
-    const placeholderWrap = this.getElement().querySelector(`.event__field-group`);
-    unrender(placeholderWrap.querySelector(`.event__label`));
-    const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
-    render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
+  onClickTypeChange(evt, context) {
+    this._eventRenderUtils.onClickChangeEventType(evt, context);
   }
 
-  _markCheckedCheckbox(evt) {
-    [...this.getElement().querySelectorAll(`.event__type-input`)]
-      .forEach((input) => {
-        input.checked = false;
-      });
-    evt.target.checked = true;
-  }
-  _renameInputValuesAccordingCheckedCheckbox(evt) {
-    this._markCheckedCheckbox(evt);
-    this._event = evt.target.value;
-    this.getElement().querySelector(`.event__type-toggle`).value = this._event;
+  onChangeDestinationChange(evt, context) {
+    this._eventRenderUtils._onChangeDestination(evt, context);
   }
 
-  _renderIcon() {
-    const iconWrap = this.getElement().querySelector(`.event__type`);
-    unrender(iconWrap.querySelector(`.event__type-icon`));
-    const eventIcon = new EventIcon(this._event);
-    render(iconWrap, eventIcon.getElement());
-  }
-  _renderOffers() {
-    const offersWrap = this.getElement().querySelector(`.event__section`);
-    unrender(offersWrap.querySelector(`.event__available-offers`));
-    const offers = new EventOffers(this._offers, this._event, this._id);
-    render(offersWrap, offers.getElement());
-  }
-  _renderDescription() {
-    const descriptionWrap = this.getElement().querySelector(`.event__section--destination`);
-    unrender(this.getElement().querySelector(`.event__section-title--destination`));
-    unrender(this.getElement().querySelector(`.event__destination-description`));
-    const description = new DestinationDescription(this._description, this._destination).getElement();
-    render(descriptionWrap, description, `afterbegin`);
-  }
-
-  _onchangeDestination(evt) {
-    this._destination = evt.target.value;
-    this._renderDescription();
-  }
-
-  onClickChangeEventType(evt) {
-    this._renameInputValuesAccordingCheckedCheckbox(evt);
-    this._renderIcon();
-    this._renderPlaceholder();
-    this._renderOffers();
-  }
-  //
-  // onClickDelete() {
-  //   // this._onChangeSubmit(null, this);
-  //   unrender(this.getElement());
-  //   this.removeElement();
-  //   this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
-  //   if (!this._container.querySelectorAll(`.trip-events__item`).length) {
-  //     unrender(this._container);
-  //   }
-  //   if (!this._daysContainer.children.length) {
-  //     render(this._daysContainer, this._noPoints.getElement(this._events));
-  //     unrender(this._sort.getElement());
-  //   }
+  // _markCheckedCheckbox(evt) {
+  //   [...this.getElement().querySelectorAll(`.event__type-input`)]
+  //     .forEach((input) => {
+  //       input.checked = false;
+  //     });
+  //   evt.target.checked = true;
   // }
+  // _renameInputValuesAccordingCheckedCheckbox(evt) {
+  //   this._markCheckedCheckbox(evt);
+  //   this._event = evt.target.value;
+  //   this.getElement().querySelector(`.event__type-toggle`).value = this._event;
+  // }
+  //
+  // _renderIcon() {
+  //   const iconWrap = this.getElement().querySelector(`.event__type`);
+  //   unrender(iconWrap.querySelector(`.event__type-icon`));
+  //   const eventIcon = new EventIcon(this._event);
+  //   render(iconWrap, eventIcon.getElement());
+  // }
+  // _renderOffers() {
+  //   const offersWrap = this.getElement().querySelector(`.event__section`);
+  //   unrender(offersWrap.querySelector(`.event__available-offers`));
+  //   const offers = new EventOffers(this._offers, this._event, this._id);
+  //   render(offersWrap, offers.getElement());
+  // }
+  // _renderPlaceholder() {
+  //   const placeholderWrap = this.getElement().querySelector(`.event__field-group`);
+  //   unrender(placeholderWrap.querySelector(`.event__label`));
+  //   const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
+  //   render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
+  // }
+  // _renderDescription() {
+  //   const descriptionWrap = this.getElement().querySelector(`.event__section--destination`);
+  //   unrender(this.getElement().querySelector(`.event__section-title--destination`));
+  //   unrender(this.getElement().querySelector(`.event__destination-description`));
+  //   const description = new DestinationDescription(this._description, this._destination).getElement();
+  //   render(descriptionWrap, description, `afterbegin`);
+  // }
+  // onClickChangeEventType(evt) {
+  //   this._renameInputValuesAccordingCheckedCheckbox(evt);
+  //   this._renderIcon();
+  //   this._renderPlaceholder();
+  //   this._renderOffers();
+  // }
+  //
+  // _onchangeDestination(evt) {
+  //   this._destination = evt.target.value;
+  //   this._renderDescription();
+  // }
+
 
   init() {
     [...this.getElement().querySelectorAll(`.event__input--time`)]

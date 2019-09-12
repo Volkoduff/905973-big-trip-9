@@ -1,13 +1,13 @@
 import {AbstractComponent} from './abstract-conponent';
 
 export class EventPlaceholder extends AbstractComponent {
-  constructor(event, destination, eventComparator, destinationComparator, index) {
+  constructor(event, {_destination, _eventComparator, _destinationComparator, _index}) {
     super();
     this._event = event;
-    this._destination = destination;
-    this._eventComparator = eventComparator;
-    this._destinationComparator = destinationComparator;
-    this._id = index;
+    this._destination = _destination;
+    this._eventComparator = _eventComparator;
+    this._destinationComparator = _destinationComparator;
+    this._id = _index;
   }
 
   getTemplate() {

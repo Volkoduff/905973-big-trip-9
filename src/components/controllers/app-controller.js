@@ -4,7 +4,7 @@ import {Statistics} from './../stats';
 import {NavigationMenu} from './../navigation-menu';
 import {Filter} from './../filter';
 import {routePointData, filterData, menuData} from './../data';
-import {render, unrender} from './../utils';
+import {render} from './../utils';
 
 export class AppController extends AbstractComponent {
   constructor(infoContainer, tripEventsContainer, controlsContainer) {
