@@ -1,15 +1,15 @@
 import {AbstractComponent} from './abstract-conponent';
 
 export class EventOffers extends AbstractComponent {
-  constructor(event, {_offers, _index}) {
+  constructor(event, offers, index) {
     super();
     this._event = event;
-    this._offers = _offers;
-    this._id = _index;
+    this._offers = offers;
+    this._id = index;
   }
 
   getTemplate() {
-    return `<div class="event__available-offers">
+    return `<section class="event__section  event__section--offers"><div class="event__available-offers">
       ${this._offers
             .filter((offer) => offer.type === this._event)
             .map((el) => el.offers
@@ -22,6 +22,6 @@ export class EventOffers extends AbstractComponent {
       +
       €&nbsp;<span class="event__offer-price">${offer.price}</span>
       </label>
-      </div>`).join(``))}`;
+      </div>`).join(``))}</section>`;
   }
 }

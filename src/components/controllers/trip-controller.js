@@ -3,10 +3,10 @@ import {EventsList} from './../events-list';
 import {Day} from './../day';
 import {RouteInfo} from './../route-info';
 import {Sort} from './../sort';
+import {DefaultEvent} from './../default-event';
 import {NoPoints} from './../no-points';
 import {render, unrender} from './../utils';
-import {PointController} from "./point-controller";
-import {AddEventController} from "./add-event-controller";
+import {PointController, Mode} from "./point-controller";
 import moment from "moment";
 
 export class TripController {
@@ -14,10 +14,10 @@ export class TripController {
     this._container = container;
     this._infoContainer = infoContainer;
     this._events = events;
+    this._defaultEvent = new DefaultEvent(events);
     this._sort = new Sort();
     this._daysList = new DaysList();
     this._eventsList = new EventsList();
-    // this._addEvent = new AddEvent(events);
     this._subscriptions = [];
     this._noPoints = new NoPoints();
     this._onDataChange = this._onDataChange.bind(this);
@@ -27,14 +27,11 @@ export class TripController {
   }
 
   init() {
-    this._getEventsPerDayMap();
+    this._getDailyEventsMap();
     this._renderDayList();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
     this._renderRouteInfo();
-    this.addEventController = new AddEventController(this._sort, this._events);
-    this.addEventController.init();
-    this._newEvent = this.addEventController.newEvent;
-    this._renderNewEvent(this._newEvent, null, this._sort);
+    this._renderNewEvent();
   }
 
   _renderRouteInfo() {
@@ -43,13 +40,19 @@ export class TripController {
   }
 
   // Обработка данных в Мапу НАЧАЛОСЬ
-  _getEventsPerDayMap() {
+  _getDailyEventsMap() {
     this._eventsPerDay = new Map();
     this._getUniqueSortedDates().forEach((date) => this._eventsPerDay
-      .set(date, this ._fillMapKeysProperValues(date)));
-    return this._eventsPerDay;
+      .set(date, this._getMapFilledProperValues(date)));
+    // return this._eventsPerDay;
   }
-  _fillMapKeysProperValues(key) {
+  _getUniqueSortedDates() {
+    const sortedTime = this._events
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((obj) => moment(obj.startTime).format(`MMM DD`));
+    return [...new Set(sortedTime)];
+  }
+  _getMapFilledProperValues(key) {
     const properEvents = [];
     this._events.forEach((event) => {
       if (this._getDate(key) === this._getDate(event.startTime)) {
@@ -57,12 +60,6 @@ export class TripController {
       }
     });
     return properEvents;
-  }
-  _getUniqueSortedDates() {
-    const sortedTime = this._events
-      .sort((a, b) => a.startTime - b.startTime)
-      .map((obj) => moment(obj.startTime).format(`MMM DD`));
-    return [...new Set(sortedTime)];
   }
   _getDate(ms) {
     return new Date(ms).getDate();
@@ -175,16 +172,23 @@ export class TripController {
       this._events[index] = newData;
     }
     this._events[this._events.findIndex((el) => el === oldData)] = newData;
-
-    unrender(this._daysList.getElement());
-    this._daysList.removeElement();
     unrender(this._sort.getElement());
     this._sort.removeElement();
-    this._getEventsPerDayMap();
-    this._renderDayList();
+
+    this._getDailyEventsMap();
+    this._reRenderDayList();
+    this._reRenderRouteInfo();
+  }
+
+  _reRenderRouteInfo() {
     unrender(this._routeInfo.getElement());
     this._routeInfo.removeElement();
     this._renderRouteInfo();
+  }
+  _reRenderDayList() {
+    unrender(this._daysList.getElement());
+    this._daysList.removeElement();
+    this._renderDayList();
   }
 
   _onChangeView() {
@@ -192,14 +196,14 @@ export class TripController {
   }
 
   _renderEvent(event, index, container) {
-    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), `DEFAULT`);
-
+    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT);
     this._subscriptions.push(pointController.setDefaultView.bind(pointController));
   }
 
-  _renderNewEvent(event, index, container) {
+  _renderNewEvent() {
+    let event = this._defaultEvent.getDefaultEvent();
     // eslint-disable-next-line no-new
-    new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), `ADD_NEW_EVENT`);
+    new PointController(null, event, null, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
   }
 
   hide() {
