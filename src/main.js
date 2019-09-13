@@ -1,35 +1,8 @@
-import {getMenuTemplate} from './components/menu';
-import {getFilterTemplate} from './components/filter';
-import {TripController} from './components/controllers/trip-controller';
-import {routePointData, filterData, menuData} from './components/data';
-
-const renderMenu = (container, objects) => {
-  container.insertAdjacentHTML(`afterend`, getMenuTemplate(objects));
-};
-
-const renderFilter = (container, objects) => {
-  container.insertAdjacentHTML(`beforeend`, getFilterTemplate(objects));
-};
+import {AppController} from './components/controllers/app-controller';
 
 const controlsContainer = document.querySelector(`.trip-main__trip-controls`);
-const elementBeforeMenu = controlsContainer.querySelector(`h2`);
-renderMenu(elementBeforeMenu, menuData);
-renderFilter(controlsContainer, filterData);
-
 const infoContainer = document.querySelector(`.trip-main__trip-info`);
 const tripEventsContainer = document.querySelector(`.trip-events`);
-const tripController = new TripController(tripEventsContainer, routePointData(), infoContainer);
-tripController.init();
 
-const getSummOfTextContent = (elementsList) => elementsList.length > 1 ? Array.from(elementsList)
-.map((el) => parseFloat(el.textContent))
-.reduce((accumulator, a) => accumulator + a) : parseFloat(elementsList.textContent);
-
-const getMoneySummToMarkup = () => {
-  const mainPrices = document.querySelectorAll(`.event__price-value`);
-  const offerPrices = document.querySelectorAll(`.event__offer-price`);
-  const totalMoneyAmountElement = document.querySelector(`.trip-info__cost-value`);
-  totalMoneyAmountElement.textContent = getSummOfTextContent(mainPrices) + getSummOfTextContent(offerPrices);
-};
-
-getMoneySummToMarkup();
+const appController = new AppController(infoContainer, tripEventsContainer, controlsContainer);
+appController.init();

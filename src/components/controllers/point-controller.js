@@ -1,31 +1,37 @@
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
 import {render} from './../utils';
+import moment from "moment";
+
+export const Mode = {
+  DEFAULT: `default`,
+  ADD_NEW: `add-new`,
+};
 
 export class PointController {
-  constructor(container, events, index, onDataChange, onChangeView, eventsList, sort) {
+  constructor(container, event, index, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode) {
     this._container = container;
-    this._events = events;
+    this._event = event;
     this._index = index;
+    this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
     this._sort = sort;
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
-    this._eventView = new Event(events);
-    this._eventEdit = new EventEdit(events, index, this._container, this._sort);
-    this.init();
+    this.init(mode);
   }
 
-  _offersInputsSync(offers, entry, key) {
-    offers.filter((el) => el.type === entry.event)
-      .map((offersObject) => offersObject.offers
-        .filter((offer) => offer.id(offer.name) === key)
-        .forEach((el) => {
-          el.isChecked = entry[key] !== null;
-        }));
-  }
+  init(mode) {
+    if (mode === Mode.ADD_NEW) {
+      document.querySelector(`.trip-main__event-add-btn`)
+        .addEventListener(`click`, () => this._eventEdit.onClickRenderEvent());
+      this._eventEdit = new EventEdit(this._event, this._index, this._sort);
+    } else if (Mode.DEFAULT) {
+      this._eventView = new Event(this._event);
+      this._eventEdit = new EventEdit(this._event, this._index, this._container);
+    }
+    this._currentView = this._eventEdit;
 
-  init() {
     const onEscKeyDown = (evt) => {
       if (evt.key === `Escape`) {
         this._onChangeView();
@@ -33,7 +39,11 @@ export class PointController {
       }
     };
 
-    this._eventEdit.getElement()
+    this._currentView.getElement()
+      .querySelector(`.event__type-toggle`)
+      .addEventListener(`blur`, (evt) => this._currentView.onBlurCloseEventList(evt));
+
+    this._currentView.getElement()
       .querySelector(`.event__input`)
       .addEventListener(`focus`, () => {
         removeEventListener(`keydown`, onEscKeyDown);
@@ -41,9 +51,14 @@ export class PointController {
 
     const onSubmitDataChange = (evt) => {
       evt.preventDefault();
-      const formData = new FormData(this._eventEdit.getElement().querySelector(`.event--edit`));
+      let formData;
+      if (evt.target.parentNode.tagName === `LI`) {
+        formData = new FormData(this._currentView.getElement().querySelector(`.event--edit`));
+      } else {
+        formData = new FormData(this._currentView.newForm);
+      }
       formData.getAll(`textarea`);
-      const newEventDataMask = Object.assign({}, this._events);
+      const newEventDataMask = Object.assign({}, this._event);
       const entry = {
         destination: formData.get(`event-destination`),
         seats: formData.get(`event-offer-seats`),
@@ -60,54 +75,98 @@ export class PointController {
         // eslint-disable-next-line guard-for-in
         for (const key in entry) {
           newEventDataMask[key] = entry[key];
-          if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
-            this._offersInputsSync(newEventDataMask.offers, entry, key);
-            delete newEventDataMask[key];
+          if (newEventDataMask.offers !== undefined) {
+            if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
+              this._offersInputsSync(newEventDataMask.offers, entry, key);
+              delete newEventDataMask[key];
+            }
           }
+          if (key === `startTime` || key === `endTime`) {
+            newEventDataMask[key] = +moment(newEventDataMask[key]).format(`x`);
+          }
+
+
         }
       }
-
-      this._onDataChange(newEventDataMask, this._events);
+      this._onDataChange(newEventDataMask, mode === Mode.DEFAULT ? this._event : null);
       removeEventListener(`keydown`, onEscKeyDown);
+      if (mode === Mode.ADD_NEW) {
+        this._currentView.cancelNewEvent(evt);
+      }
     };
 
-    this._eventEdit.getElement()
-      .querySelector(`.event--edit`)
-      .addEventListener(`submit`, onSubmitDataChange);
+    const onDeleteDataChange = (evt) => {
+      evt.preventDefault();
+      this._onDataChange(null, this._event);
+      onSubmitDataChange(evt);
+      this._onDeleteCheck();
+    };
 
-    this._eventEdit.getElement()
+    this._currentView.getElement()
       .querySelector(`.event__input`)
       .addEventListener(`blur`, () => {
         addEventListener(`keydown`, onEscKeyDown);
       });
 
-    this._eventEdit.getElement()
-      .querySelector(`.event__reset-btn`)
-      .addEventListener(`click`, () => this._eventEdit.onClickDelete());
+    if (mode === Mode.DEFAULT) {
+      this._currentView.getElement()
+        .querySelector(`.event__reset-btn`)
+        .addEventListener(`click`, onDeleteDataChange);
 
-    this._eventView.getElement()
-      .querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, () => {
-        this._onChangeView();
-        this._container.querySelector(`.trip-events__list`)
-          .replaceChild(this._eventEdit.getElement(), this._eventView.getElement());
-        addEventListener(`keydown`, onEscKeyDown);
-      });
+      this._currentView.getElement()
+        .querySelector(`.event--edit`)
+        .addEventListener(`submit`, onSubmitDataChange);
 
-    this._eventEdit.getElement()
-      .querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, () => {
-        this._onChangeView();
-        removeEventListener(`keydown`, onEscKeyDown);
-      });
+      this._eventView.getElement()
+        .querySelector(`.event__rollup-btn`)
+        .addEventListener(`click`, () => {
+          this._onChangeView();
+          this._container.querySelector(`.trip-events__list`)
+            .replaceChild(this._currentView.getElement(), this._eventView.getElement());
+          addEventListener(`keydown`, onEscKeyDown);
+        });
 
-    this._eventEdit.getElement().querySelector(`.event__input--destination`)
-      .addEventListener(`change`, (evt) => this._eventEdit._onchangeDestination(evt));
+      this._currentView.getElement()
+        .querySelector(`.event__rollup-btn`)
+        .addEventListener(`click`, () => {
+          this._onChangeView();
+          removeEventListener(`keydown`, onEscKeyDown);
+        });
 
-    [...this._eventEdit.getElement().querySelectorAll(`.event__type-input`)]
-      .forEach((el) => el.addEventListener(`click`, (evt) => this._eventEdit.onClickChangeEventType(evt)));
+    } else if (mode === Mode.ADD_NEW) {
+      this._currentView.getElement()
+        .querySelector(`.event--edit`)
+        .addEventListener(`submit`, onSubmitDataChange);
+    }
 
-    render(this._eventsList, this._eventView.getElement(event, this._index));
+    const destinationInput = this._currentView.getElement().querySelector(`.event__input--destination`);
+
+    destinationInput.addEventListener(`change`, (evt) => this._currentView.onchangeDestination(evt, mode));
+
+    [...this._currentView.getElement().querySelectorAll(`.event__type-input`)]
+      .forEach((el) => el.addEventListener(`click`, (evt) => this._currentView.onClickChangeEventType(evt, mode)));
+
+    destinationInput.addEventListener(`keydown`, (evt) => {
+      if (evt.key !== `Backspace`) {
+        evt.preventDefault();
+      }
+    });
+
+    if (mode === Mode.DEFAULT) {
+      render(this._eventsList, this._eventView.getElement(event, this._index));
+    } else if (mode === `ADD_NEW_EVENT`) {
+      // Ничего не рендерим так как в компоненте есть метод для этого, только если для пустого окна
+      // render(this._sort.getElement(), this._currentView.getElement(), `beforebegin`);
+    }
+  }
+
+  _offersInputsSync(offers, entry, key) {
+    offers.filter((el) => el.type === entry.event)
+      .map((offersObject) => offersObject.offers
+        .filter((offer) => offer.id(offer.name) === key)
+        .forEach((el) => {
+          el.isChecked = entry[key] !== null;
+        }));
   }
 
   setDefaultView() {

@@ -8,8 +8,18 @@ export class DestinationDescription extends AbstractComponent {
   }
 
   getTemplate() {
-    return `<div><h3 class="event__section-title  event__section-title--destination">Destination</h3><p class="event__destination-description">${this._description
+    return `<section class="event__section  event__section--destination">
+          ${this._description ? `
+<h3 class="event__section-title  event__section-title--destination">Destination</h3>
+<p class="event__destination-description">
+      ${this._description
       .filter((el) => el.destination === this._destination)
-      .map((el) => el.description)}</p></div>`;
+      .map((el) => el.description)}</p>` : ``}
+          ${this._photos ?
+    `<div class="event__photos-container">
+            <div class="event__photos-tape"> ${Array.from(this._photos).map(() => `<img class="event__photo" src="http://picsum.photos/300/150?r=${Math.random()}" alt="Event photo">`).join(``)}}
+            </div>
+          </div>` : ``}
+        </section>`;
   }
 }

@@ -4,21 +4,17 @@ import {EventPlaceholder} from './event-placeholder';
 import {EventOffers} from './event-offers';
 import {DestinationDescription} from './destination-description';
 import {render, unrender} from './utils';
-import {NoPoints} from "./no-points";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/light.css";
 import moment from "moment";
 
-// const getDateTime = (ms) => Array.from(new Date(ms).toTimeString()).slice(0, 5).join(``);
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container, sort) {
+  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container) {
     super();
-    this._noPoints = new NoPoints();
     this._event = event;
-    this._sort = sort;
     this._container = container;
     this._photos = photos;
     this._startTime = startTime;
@@ -34,72 +30,9 @@ export class EventEdit extends AbstractComponent {
     this._activityEvents = activityEvents;
     this._isFavorite = isFavorite;
     this._id = index;
+    this._eventCreating = false;
+    this.newForm = this.getElement().querySelector(`form`);
     this.init();
-  }
-
-  _renderPlaceholder() {
-    const placeholderWrap = this.getElement().querySelector(`.event__field-group`);
-    unrender(placeholderWrap.querySelector(`.event__label`));
-    const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
-    render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
-  }
-
-  _markCheckedCheckbox(evt) {
-    [...this.getElement().querySelectorAll(`.event__type-input`)]
-      .forEach((input) => {
-        input.checked = false;
-      });
-    evt.target.checked = true;
-  }
-  _renameInputValuesAccordingCheckedCheckbox(evt) {
-    this._markCheckedCheckbox(evt);
-    this._event = evt.target.value;
-    this.getElement().querySelector(`.event__type-toggle`).value = this._event;
-  }
-
-  _renderIcon() {
-    const iconWrap = this.getElement().querySelector(`.event__type`);
-    unrender(iconWrap.querySelector(`.event__type-icon`));
-    const eventIcon = new EventIcon(this._event);
-    render(iconWrap, eventIcon.getElement());
-  }
-  _renderOffers() {
-    const offersWrap = this.getElement().querySelector(`.event__section`);
-    unrender(offersWrap.querySelector(`.event__available-offers`));
-    const offers = new EventOffers(this._offers, this._event, this._id);
-    render(offersWrap, offers.getElement());
-  }
-  _renderDescription() {
-    const descriptionWrap = this.getElement().querySelector(`.event__section--destination`);
-    unrender(this.getElement().querySelector(`.event__section-title--destination`));
-    unrender(this.getElement().querySelector(`.event__destination-description`));
-    const description = new DestinationDescription(this._description, this._destination).getElement();
-    render(descriptionWrap, description, `afterbegin`);
-  }
-
-  _onchangeDestination(evt) {
-    this._destination = evt.target.value;
-    this._renderDescription();
-  }
-
-  onClickChangeEventType(evt) {
-    this._renameInputValuesAccordingCheckedCheckbox(evt);
-    this._renderIcon();
-    this._renderPlaceholder();
-    this._renderOffers();
-  }
-
-  onClickDelete() {
-    unrender(this.getElement());
-    this.removeElement();
-    this._daysContainer = this._container.offsetParent.querySelector(`.trip-days`);
-    if (!this._container.querySelectorAll(`.trip-events__item`).length) {
-      unrender(this._container);
-    }
-    if (!this._daysContainer.children.length) {
-      render(this._daysContainer, this._noPoints.getElement(this._events));
-      unrender(this._sort.getElement());
-    }
   }
 
   init() {
@@ -115,6 +48,123 @@ export class EventEdit extends AbstractComponent {
         minuteIncrement: 1,
         dateFormat: `Y-m-d H:i`, // Формат входящей даты
       }));
+  }
+
+  isCreating(flag) {
+    this._eventCreating = flag;
+  }
+
+  onClickRenderEvent() {
+    if (!this._eventCreating) {
+      const container = document.querySelector(`.trip-events__trip-sort`);
+      this._displayAsNewEvent();
+      render(container, this.newForm, `afterend`);
+      this.newForm.classList.add(`trip-events__item`);
+      this._eventCreating = true;
+      document.querySelector(`.trip-main__event-add-btn`).disabled = true;
+    }
+  }
+
+  onClickChangeEventType(evt, mode) {
+    this._getProperContext(mode);
+    this._renameInputValuesAccordingCheckedCheckbox(evt);
+    this._renderIcon();
+    this._renderPlaceholder();
+    this._renderOffers();
+  }
+
+  onchangeDestination(evt, mode) {
+    this._getProperContext(mode);
+    this._destination = evt.target.value;
+    this._renderDescription();
+  }
+
+  cancelNewEvent(evt) {
+    evt.preventDefault();
+    this.isCreating(false);
+    this._hideNewEventDetails();
+    unrender(this.newForm);
+    this.newForm.remove();
+    document.querySelector(`.trip-main__event-add-btn`).disabled = false;
+  }
+
+  onBlurCloseEventList(evt) {
+    if (evt.currentTarget) {
+      // evt.currentTarget.checked = false;
+    }
+  }
+
+  _displayAsNewEvent() {
+    const toggleButton = this.getElement().querySelector(`.event__rollup-btn`);
+    if (toggleButton !== null) {
+      unrender(toggleButton);
+      this._transformDeleteButton();
+      const favoriteButton = this.getElement().querySelector(`.event__favorite-btn`);
+      favoriteButton.classList.add(`visually-hidden`);
+      this._hideNewEventDetails();
+    }
+  }
+
+  _hideNewEventDetails() {
+    const eventDetails = this.newForm.querySelector(`.event__details`);
+    eventDetails.classList.add(`visually-hidden`);
+    const eventTypeButton = this.newForm.querySelector(`.event__type-btn`);
+    eventTypeButton.addEventListener(`click`, () => this._onClickShow(eventDetails));
+  }
+
+  _onClickShow(element) {
+    element.classList.remove(`visually-hidden`);
+  }
+
+  _transformDeleteButton() {
+    const deleteButton = this.getElement().querySelector(`.event__reset-btn`);
+    deleteButton.textContent = `Cancel`;
+    deleteButton.addEventListener(`click`, (evt) => this.cancelNewEvent(evt));
+  }
+
+  _getProperContext(mode) {
+    if (mode === `add-new`) {
+      this._form = this.newForm;
+    } else {
+      this._form = this.getElement();
+    }
+  }
+  _markCheckedCheckbox(evt) {
+    [...this._form.querySelectorAll(`.event__type-input`)]
+      .forEach((input) => {
+        input.checked = false;
+      });
+    evt.target.checked = true;
+  }
+  _renameInputValuesAccordingCheckedCheckbox(evt) {
+    this._markCheckedCheckbox(evt);
+    this._event = evt.target.value;
+    this._form.querySelector(`.event__type-toggle`).value = this._event;
+  }
+  _renderIcon() {
+    const iconWrap = this._form.querySelector(`.event__type`);
+    unrender(iconWrap.querySelector(`.event__type-icon`));
+    const eventIcon = new EventIcon(this._event);
+    render(iconWrap, eventIcon.getElement());
+  }
+  _renderOffers() {
+    const offersWrap = this._form.querySelector(`.event__section`);
+    unrender(offersWrap.querySelector(`.event__available-offers`));
+    const offers = new EventOffers(this._event, this._offers, this._id);
+    render(offersWrap, offers.getElement());
+  }
+  _renderPlaceholder() {
+    const placeholderWrap = this._form.querySelector(`.event__field-group`);
+    unrender(placeholderWrap.querySelector(`.event__label`));
+    const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
+    render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
+  }
+  _renderDescription() {
+    const descriptionWrap = this._form.querySelector(`.event__section--destination`);
+    unrender(this._form.querySelector(`.event__section-title--destination`));
+    unrender(this._form.querySelector(`.event__destination-description`));
+    const description = new DestinationDescription(this._description, this._destination).getElement();
+    render(descriptionWrap, description, `afterbegin`);
   }
 
   getTemplate() {

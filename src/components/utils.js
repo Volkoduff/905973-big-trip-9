@@ -2,6 +2,7 @@ export const createElement = (template) => {
   const newElement = document.createElement(`div`);
   newElement.innerHTML = template;
   return newElement.firstChild;
+
 };
 
 export const render = (container, element, postition = `beforeend`) => {
@@ -13,10 +14,10 @@ export const render = (container, element, postition = `beforeend`) => {
       container.append(element);
       break;
     case `beforebegin`:
-      container.insertAdjacentHTML(`beforebegin`, element);
+      container.before(element);
       break;
     case `afterend`:
-      container.insertAdjacentHTML(`afterend`, element);
+      container.after(element);
       break;
   }
 };
