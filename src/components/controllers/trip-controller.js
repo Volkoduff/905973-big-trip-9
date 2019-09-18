@@ -23,69 +23,46 @@ export class TripController {
     this._onDataChange = this._onDataChange.bind(this);
     this._onChangeView = this._onChangeView.bind(this);
     this._dayIndex = null;
+    this._areEventsEmpty = false;
     this._eventsPerDay = null;
   }
 
   init() {
     this._getDailyEventsMap();
-    this._renderDayList();
+    this.renderEvents();
     this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
     this._renderRouteInfo();
     this._renderNewEvent();
+
   }
 
-  _renderRouteInfo() {
-    this._routeInfo = new RouteInfo(this._eventsPerDay);
-    render(this._infoContainer, this._routeInfo.getElement(), `afterbegin`);
+  renderFilteredFutureEvents() {
+    this._reRenderSort();
+    this._reRenderDayList();
+    this._getEventsInList();
+    this._currentDate = moment().format(`DD`);
+    this._array
+      .filter((el) => el.startTime > moment().format(`x`))
+      .filter((el) => moment(el.startTime).format(`DD`) > this._currentDate)
+      .forEach((event) => this._renderEvent(event, this._randomId(), this._day));
+    render(this._day, this._eventsList);
   }
 
-  // Обработка данных в Мапу НАЧАЛОСЬ
-  _getDailyEventsMap() {
-    this._eventsPerDay = new Map();
-    this._getUniqueSortedDates().forEach((date) => this._eventsPerDay
-      .set(date, this._getMapFilledProperValues(date)));
-    // return this._eventsPerDay;
-  }
-  _getUniqueSortedDates() {
-    const sortedTime = this._events
-      .sort((a, b) => a.startTime - b.startTime)
-      .map((obj) => moment(obj.startTime).format(`MMM DD`));
-    return [...new Set(sortedTime)];
-  }
-  _getMapFilledProperValues(key) {
-    const properEvents = [];
-    this._events.forEach((event) => {
-      if (this._getDate(key) === this._getDate(event.startTime)) {
-        properEvents.push(event);
-      }
-    });
-    return properEvents;
-  }
-  _getDate(ms) {
-    return new Date(ms).getDate();
-  }
-  // Обработка данных в Мапу ЗАКОНЧИЛОСЬ
-
-  _randomId() {
-    return Math.floor(Math.random() * Date.now()).toString().slice(7);
+  renderFilteredPastEvents() {
+    this._reRenderSort();
+    this._reRenderDayList();
+    this._getEventsInList();
+    this._currentDate = moment().format(`DD`);
+    this._array
+      .filter((el) => el.startTime < moment().format(`x`))
+      .filter((el) => moment(el.endTime).format(`DD`) < this._currentDate)
+      .forEach((event) => this._renderEvent(event, this._randomId(), this._day));
+    render(this._day, this._eventsList);
   }
 
-  _cleaningForSort() {
-    this._sort.getElement().querySelector(`.trip-sort__item--day`).innerHTML = ``;
-    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
-    render(this._container, this._sort.getElement());
-  }
-
-  _getEventsPerDays() {
-    render(this._daysList.getElement(), this._day); // Рендерим день в контэйнер
-    this._eventsList = new EventsList().getElement();
-  }
-
-  _renderDayList() {
-    this._sort = new Sort();
-    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
-    render(this._container, this._sort.getElement());
-    render(this._container, this._daysList.getElement());
+  renderEvents() {
+    this._reRenderSort();
+    this._reRenderDayList();
     for (let date of this._eventsPerDay.keys()) {
       this._dayIndex++;
       this._day = new Day(date, this._dayIndex).getElement(); // создаем новый день и передаем ему ключ(дату)
@@ -99,7 +76,29 @@ export class TripController {
     this._dayIndex = null;
   }
 
+  getEvents() {
+    return this._events;
+  }
+
+  _renderRouteInfo() {
+    this._routeInfo = new RouteInfo(this._eventsPerDay);
+    render(this._infoContainer, this._routeInfo.getElement(), `afterbegin`);
+  }
+
+  _getEventsPerDays() {
+    render(this._daysList.getElement(), this._day); // Рендерим день в контэйнер
+    this._eventsList = new EventsList().getElement();
+  }
+
   // Сортировка
+  _cleaningForSort() {
+    this._sort.getElement().querySelector(`.trip-sort__item--day`).innerHTML = ``;
+    render(this._container, this._sort.getElement());
+  }
+
+  _randomId() {
+    return Math.floor(Math.random() * Date.now()).toString().slice(7);
+  }
   _getEventsInList() {
     this._cleaningForSort();
     this.condition = `no-dates`;
@@ -136,13 +135,11 @@ export class TripController {
     if (evt.target.tagName !== `INPUT`) {
       return;
     }
-    unrender(this._daysList.getElement()); // Создается видимо несколько sort, избыточное создание где-то (Нужно отрефакторить)
+    unrender(this._daysList.getElement());
     this._daysList.removeElement();
-    unrender(this._sort.getElement());
-    // this._sort.removeElement();
     switch (evt.target.dataset.sortType) {
       case `by-event`:
-        this._renderDayList();
+        this.renderEvents();
         break;
       case `by-time`:
         this._renderSortedEventsByDuration();
@@ -154,11 +151,11 @@ export class TripController {
   }
   // Сортировка
 
-
   onDeleteCheck() {
     if (!this._events.length) {
       render(this._container, this._noPoints.getElement(this._events));
       unrender(this._sort.getElement());
+      this._areEventsEmpty = true;
     }
   }
 
@@ -176,7 +173,7 @@ export class TripController {
     this._sort.removeElement();
 
     this._getDailyEventsMap();
-    this._reRenderDayList();
+    this.renderEvents();
     this._reRenderRouteInfo();
   }
 
@@ -185,26 +182,46 @@ export class TripController {
     this._routeInfo.removeElement();
     this._renderRouteInfo();
   }
-  _reRenderDayList() {
-    unrender(this._daysList.getElement());
-    this._daysList.removeElement();
-    this._renderDayList();
-  }
 
   _onChangeView() {
     this._subscriptions.forEach((subscription) => subscription());
   }
 
   _renderEvent(event, index, container) {
-    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT);
+    const pointController = new PointController(container, event, index, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT, this._areEventsEmpty);
     this._subscriptions.push(pointController.setDefaultView.bind(pointController));
   }
 
   _renderNewEvent() {
     let event = this._defaultEvent.getDefaultEvent();
-    // eslint-disable-next-line no-new
-    new PointController(null, event, null, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
+    this.pointController = new PointController(null, event, null, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
   }
+
+  // Обработка данных в Мапу НАЧАЛОСЬ
+  _getDailyEventsMap() {
+    this._eventsPerDay = new Map();
+    this._getUniqueSortedDates().forEach((date) => this._eventsPerDay
+      .set(date, this._getMapFilledProperValues(date)));
+  }
+  _getUniqueSortedDates() {
+    const sortedTime = this._events
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((obj) => moment(obj.startTime).format(`MMM DD`));
+    return [...new Set(sortedTime)];
+  }
+  _getMapFilledProperValues(key) {
+    const properEvents = [];
+    this._events.forEach((event) => {
+      if (this._getDate(key) === this._getDate(event.startTime)) {
+        properEvents.push(event);
+      }
+    });
+    return properEvents;
+  }
+  _getDate(ms) {
+    return new Date(ms).getDate();
+  }
+  // Обработка данных в Мапу ЗАКОНЧИЛОСЬ
 
   hide() {
     this._container.classList.add(`visually-hidden`);
@@ -212,6 +229,28 @@ export class TripController {
 
   show() {
     this._container.classList.remove(`visually-hidden`);
+  }
+
+  _renderSort() {
+    this._sort = new Sort();
+    this._sort.getElement().addEventListener(`click`, (evt) => this._onSortClick(evt));
+    render(this._container, this._sort.getElement());
+  }
+
+  _reRenderSort() {
+    unrender(this._sort.getElement());
+    this._sort.removeElement();
+    this._renderSort();
+  }
+
+  _reRenderDayList() {
+    this._unRenderDayList();
+    render(this._container, this._daysList.getElement());
+  }
+
+  _unRenderDayList() {
+    unrender(this._daysList.getElement());
+    this._daysList.removeElement();
   }
 
 }

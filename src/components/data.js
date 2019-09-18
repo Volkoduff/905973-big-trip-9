@@ -21,7 +21,7 @@ const MockAmount = {
   OPTIONS: 4,
   SENTENSES: 3,
   PHOTOS: 4,
-  ROUTE_POINTS: 4,
+  ROUTE_POINTS: 5,
 };
 const EventToPretext = {
   'bus': `Bus to`,
@@ -156,6 +156,5 @@ const allOffers = [{
   offers: RandomFn.getSeveralRandomElementsFromArray(offerTransportArray, MockAmount.OPTIONS),
 },
 ];
-
 
 export const routePointData = () => Array.from({length: MockAmount.ROUTE_POINTS}, getRoutePointData);

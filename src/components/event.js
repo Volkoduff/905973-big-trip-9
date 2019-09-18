@@ -1,5 +1,6 @@
 import {AbstractComponent} from './abstract-conponent';
 import moment from "moment";
+import {getDuration} from './utils';
 
 export class Event extends AbstractComponent {
   constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}) {
@@ -12,21 +13,6 @@ export class Event extends AbstractComponent {
     this._destination = destination;
     this._eventComparator = eventComparator;
     this._destinationComparator = destinationComparator;
-  }
-
-  _getDuration() {
-    const start = moment(this._startTime);
-    const finish = moment(this._endTime);
-    const duration = finish.diff(start) / 60000;
-    let result = `Время указано неверно`;
-    if (duration > 1139) {
-      result = `${Math.floor(duration / 1140)}D ${Math.floor(duration % 24)}H ${duration % 60}M`;
-    } else if (duration > 59) {
-      result = `${Math.floor(duration / 60)}H ${duration % 60}M`;
-    } else if (duration < 59) {
-      result = `${duration}M`;
-    }
-    return result;
   }
 
   getTemplate() {
@@ -44,7 +30,7 @@ export class Event extends AbstractComponent {
           &mdash;
           <time class="event__end-time" datetime="${moment(this._startTime).format(`YYYY-MM-DDThh:mm`)}">${moment(this._endTime).format(`hh:mm`)}</time>
         </p>
-        <p class="event__duration">${this._getDuration()}</p>
+        <p class="event__duration">${getDuration(this._startTime, this._endTime)}</p>
       </div>
       <p class="event__price">
         &euro;&nbsp;<span class="event__price-value">${this._price}</span>
