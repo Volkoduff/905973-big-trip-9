@@ -8,6 +8,7 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/light.css";
 import moment from "moment";
+// import {Sort} from "./sort";
 
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
@@ -32,6 +33,7 @@ export class EventEdit extends AbstractComponent {
     this._id = index;
     this._eventCreating = false;
     this.newForm = this.getElement().querySelector(`form`);
+    // this._ifEmptyList = true;
     this.init();
   }
 
@@ -56,6 +58,12 @@ export class EventEdit extends AbstractComponent {
 
   onClickRenderEvent() {
     if (!this._eventCreating) {
+      // debugger
+      // if (this._ifEmptyList) {
+      //   const container = document.querySelector(`.trip-events`);
+      //   this._sort = this._container.getElement();
+      //   render(container, this._sort, `beforebegin`);
+      // }
       const container = document.querySelector(`.trip-events__trip-sort`);
       this._displayAsNewEvent();
       render(container, this.newForm, `afterend`);

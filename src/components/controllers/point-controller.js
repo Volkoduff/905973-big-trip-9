@@ -9,8 +9,9 @@ export const Mode = {
 };
 
 export class PointController {
-  constructor(container, event, index, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode) {
+  constructor(container, event, index, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, areEventsEmpty) {
     this._container = container;
+    this._areEventsEmpty = areEventsEmpty;
     this._event = event;
     this._index = index;
     this._onDeleteCheck = onDeleteCheck;
@@ -25,7 +26,7 @@ export class PointController {
     if (mode === Mode.ADD_NEW) {
       document.querySelector(`.trip-main__event-add-btn`)
         .addEventListener(`click`, () => this._eventEdit.onClickRenderEvent());
-      this._eventEdit = new EventEdit(this._event, this._index, this._sort);
+      this._eventEdit = new EventEdit(this._event, this._index, this._sort, this._areEventsEmpty);
     } else if (Mode.DEFAULT) {
       this._eventView = new Event(this._event);
       this._eventEdit = new EventEdit(this._event, this._index, this._container);
@@ -71,22 +72,22 @@ export class PointController {
         price: formData.get(`event-price`),
         isFavorite: formData.get(`event-favorite`),
       };
-      if (typeof entry === `object`) {
-        // eslint-disable-next-line guard-for-in
-        for (const key in entry) {
-          newEventDataMask[key] = entry[key];
-          if (newEventDataMask.offers !== undefined) {
-            if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
-              this._offersInputsSync(newEventDataMask.offers, entry, key);
-              delete newEventDataMask[key];
-            }
+      // eslint-disable-next-line guard-for-in
+      for (const key in entry) {
+        newEventDataMask[key] = entry[key];
+        if (newEventDataMask.offers !== undefined) {
+          if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
+            this._offersInputsSync(newEventDataMask.offers, entry, key);
+            delete newEventDataMask[key];
           }
-          if (key === `startTime` || key === `endTime`) {
-            newEventDataMask[key] = +moment(newEventDataMask[key]).format(`x`);
-          }
-
-
         }
+        if (key === `startTime` || key === `endTime`) {
+          newEventDataMask[key] = +moment(newEventDataMask[key]).format(`x`);
+        }
+        if (key === `price`) {
+          newEventDataMask[key] = +newEventDataMask[key];
+        }
+
       }
       this._onDataChange(newEventDataMask, mode === Mode.DEFAULT ? this._event : null);
       removeEventListener(`keydown`, onEscKeyDown);
