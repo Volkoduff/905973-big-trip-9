@@ -9,11 +9,11 @@ export const Mode = {
 };
 
 export class PointController {
-  constructor(container, event, index, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, areEventsEmpty) {
+  constructor(container, event, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, destinations, allOffers) {
     this._container = container;
-    this._areEventsEmpty = areEventsEmpty;
     this._event = event;
-    this._index = index;
+    this._allOffers = allOffers;
+    this._destinations = destinations;
     this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
     this._sort = sort;
@@ -26,10 +26,10 @@ export class PointController {
     if (mode === Mode.ADD_NEW) {
       document.querySelector(`.trip-main__event-add-btn`)
         .addEventListener(`click`, () => this._eventEdit.onClickRenderEvent());
-      this._eventEdit = new EventEdit(this._event, this._index, this._sort, this._areEventsEmpty);
+      this._eventEdit = new EventEdit(this._event, this._sort, this._destinations, this._allOffers);
     } else if (Mode.DEFAULT) {
       this._eventView = new Event(this._event);
-      this._eventEdit = new EventEdit(this._event, this._index, this._container);
+      this._eventEdit = new EventEdit(this._event, this._container, this._destinations, this._allOffers);
     }
     this._currentView = this._eventEdit;
 
@@ -61,33 +61,34 @@ export class PointController {
       formData.getAll(`textarea`);
       const newEventDataMask = Object.assign({}, this._event);
       const entry = {
-        destination: formData.get(`event-destination`),
-        seats: formData.get(`event-offer-seats`),
-        meal: formData.get(`event-offer-meal`),
-        comfort: formData.get(`event-offer-comfort`),
-        luggage: formData.get(`event-offer-luggage`),
+        destination: this._currentView._destination,
         event: formData.get(`event-type`),
         startTime: formData.get(`event-start-time`),
         endTime: formData.get(`event-end-time`),
         price: formData.get(`event-price`),
         isFavorite: formData.get(`event-favorite`),
       };
+      const allOfferInputs = evt.target.querySelectorAll(`.event__offer-checkbox`);
+      const offerInputCheckFlags = Array.from(allOfferInputs)
+        .map((input) => input.checked);
+
+      const indexOfOffer = this._allOffers.findIndex((offer) => offer.type === entry.event);
+      this._checkedOffers = this._allOffers[indexOfOffer].offers;
+      this._checkedOffers.map((offer, it) => {
+        offer.accepted = offerInputCheckFlags[it];
+      });
+      newEventDataMask.offers = this._checkedOffers;
+
       // eslint-disable-next-line guard-for-in
       for (const key in entry) {
         newEventDataMask[key] = entry[key];
-        if (newEventDataMask.offers !== undefined) {
-          if (key === `seats` || key === `comfort` || key === `luggage` || key === `meal`) {
-            this._offersInputsSync(newEventDataMask.offers, entry, key);
-            delete newEventDataMask[key];
-          }
-        }
         if (key === `startTime` || key === `endTime`) {
           newEventDataMask[key] = +moment(newEventDataMask[key]).format(`x`);
-        }
-        if (key === `price`) {
+        } else if (key === `price`) {
           newEventDataMask[key] = +newEventDataMask[key];
+        } else if (key === `isFavorite`) {
+          newEventDataMask[key] = newEventDataMask[key] !== null;
         }
-
       }
       this._onDataChange(newEventDataMask, mode === Mode.DEFAULT ? this._event : null);
       removeEventListener(`keydown`, onEscKeyDown);
@@ -148,7 +149,7 @@ export class PointController {
       .forEach((el) => el.addEventListener(`click`, (evt) => this._currentView.onClickChangeEventType(evt, mode)));
 
     destinationInput.addEventListener(`keydown`, (evt) => {
-      if (evt.key !== `Backspace`) {
+      if (evt.key !== `Backspace` && evt.key !== `Escape`) {
         evt.preventDefault();
       }
     });
@@ -161,17 +162,9 @@ export class PointController {
     }
   }
 
-  _offersInputsSync(offers, entry, key) {
-    offers.filter((el) => el.type === entry.event)
-      .map((offersObject) => offersObject.offers
-        .filter((offer) => offer.id(offer.name) === key)
-        .forEach((el) => {
-          el.isChecked = entry[key] !== null;
-        }));
-  }
-
   setDefaultView() {
-    if (this._container.contains(this._eventEdit.getElement())) {
+    debugger
+    if ((this._container.contains(this._eventEdit.getElement()))) {
       this._container.querySelector(`.trip-events__list`)
         .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
     }

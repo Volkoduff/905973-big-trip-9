@@ -2,16 +2,19 @@ import {AbstractComponent} from './abstract-conponent';
 import moment from "moment";
 
 export class DefaultEvent extends AbstractComponent {
-  constructor(events) {
-    super();
-    this._events = events;
-  }
 
-  getDefaultEvent() {
-    const defaultEvent = Object.assign({}, this._events[0]);
+  static getDefaultEvent(events) {
+    const newId = events.length;
+    const defaultEvent = Object.assign({}, events[0]);
     if (defaultEvent) {
-      defaultEvent.destination = ``;
+      defaultEvent.destination = {
+        pictures: null,
+        src: null,
+        name: ``,
+        description: ``,
+      };
       defaultEvent.startTime = moment();
+      defaultEvent.id = newId;
       defaultEvent.endTime = moment();
       defaultEvent.price = `0`;
       defaultEvent.event = `bus`;

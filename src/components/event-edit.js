@@ -5,46 +5,59 @@ import {EventOffers} from './event-offers';
 import {DestinationDescription} from './destination-description';
 import {render, unrender} from './utils';
 import flatpickr from "flatpickr";
+import rangePlugin from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/light.css";
 import moment from "moment";
-// import {Sort} from "./sort";
+
+const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
+const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
+
+export const EventToPretext = {
+  'bus': `Bus to`,
+  'check-in': `Check-in in`,
+  'drive': `Drive to`,
+  'flight': `Flight to`,
+  'restaurant': `Restaurant in`,
+  'ship': `Ship to`,
+  'sightseeing': `Sightseeing in`,
+  'taxi': `Taxi to`,
+  'train': `Train to`,
+  'transport': `Transport to`,
+  'trip': `Trip to`,
+};
 
 const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
 export class EventEdit extends AbstractComponent {
-  constructor({event, photos, startTime, endTime, price, offers, destination, destinationOptions, description, eventComparator, destinationComparator, transferEvents, activityEvents, isFavorite}, index, container) {
+  constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, container, destinations, allOffers) {
     super();
     this._event = event;
     this._container = container;
-    this._photos = photos;
+    this._destination = destination;
+    this._offers = offers;
     this._startTime = startTime;
     this._endTime = endTime;
-    this._destinationOptions = destinationOptions;
     this._price = price;
-    this._description = description;
-    this._offers = offers;
-    this._destination = destination;
-    this._eventComparator = eventComparator;
-    this._destinationComparator = destinationComparator;
-    this._transferEvents = transferEvents;
-    this._activityEvents = activityEvents;
+    this._id = id;
+    this._allOffers = allOffers;
+    this._destinations = destinations;
     this._isFavorite = isFavorite;
-    this._id = index;
     this._eventCreating = false;
     this.newForm = this.getElement().querySelector(`form`);
-    // this._ifEmptyList = true;
     this.init();
   }
 
   init() {
+
     [...this.getElement().querySelectorAll(`.event__input--time`)]
       .forEach((input) => flatpickr(input, {
-        altInput: true,
-        altFormat: `d.j.Y H:i`,
+        // altInput: true,
+        // altFormat: `d.j.Y H:i`,
         allowInput: false,
         defaultDate: this._event.dueDate,
         enableTime: true,
+        minDate: `today`,
         // eslint-disable-next-line camelcase
         time_24hr: true,
         minuteIncrement: 1,
@@ -58,12 +71,6 @@ export class EventEdit extends AbstractComponent {
 
   onClickRenderEvent() {
     if (!this._eventCreating) {
-      // debugger
-      // if (this._ifEmptyList) {
-      //   const container = document.querySelector(`.trip-events`);
-      //   this._sort = this._container.getElement();
-      //   render(container, this._sort, `beforebegin`);
-      // }
       const container = document.querySelector(`.trip-events__trip-sort`);
       this._displayAsNewEvent();
       render(container, this.newForm, `afterend`);
@@ -74,7 +81,7 @@ export class EventEdit extends AbstractComponent {
   }
 
   onClickChangeEventType(evt, mode) {
-    this._getProperContext(mode);
+    this._getProperContext(mode); // ок
     this._renameInputValuesAccordingCheckedCheckbox(evt);
     this._renderIcon();
     this._renderPlaceholder();
@@ -83,7 +90,7 @@ export class EventEdit extends AbstractComponent {
 
   onchangeDestination(evt, mode) {
     this._getProperContext(mode);
-    this._destination = evt.target.value;
+    this._destination = this._destinations.filter((destination) => destination.name === evt.target.value)[0];
     this._renderDescription();
   }
 
@@ -156,23 +163,26 @@ export class EventEdit extends AbstractComponent {
     render(iconWrap, eventIcon.getElement());
   }
   _renderOffers() {
-    const offersWrap = this._form.querySelector(`.event__section`);
-    unrender(offersWrap.querySelector(`.event__available-offers`));
-    const offers = new EventOffers(this._event, this._offers, this._id);
-    render(offersWrap, offers.getElement());
+    const offersWrap = this._form.querySelector(`.event__section--offers`);
+    unrender(offersWrap);
+    const detailsSection = this._form.querySelector(`.event__details`);
+    if (this._event !== `transport` && this._event !== `sightseeing`) {
+      const offers = new EventOffers(this._event, this._allOffers, this._id);
+      render(detailsSection, offers.getElement(), `afterbegin`);
+    }
   }
   _renderPlaceholder() {
     const placeholderWrap = this._form.querySelector(`.event__field-group`);
     unrender(placeholderWrap.querySelector(`.event__label`));
-    const eventPlaceholder = new EventPlaceholder(this._event, this._destination, this._eventComparator, this._destinationComparator, this._id);
+    const eventPlaceholder = new EventPlaceholder(this._event, this._id);
     render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
   }
   _renderDescription() {
-    const descriptionWrap = this._form.querySelector(`.event__section--destination`);
-    unrender(this._form.querySelector(`.event__section-title--destination`));
-    unrender(this._form.querySelector(`.event__destination-description`));
-    const description = new DestinationDescription(this._description, this._destination).getElement();
-    render(descriptionWrap, description, `afterbegin`);
+    const detailsSection = this._form.querySelector(`.event__details`);
+    const descriptionSection = this._form.querySelector(`.event__section--destination`);
+    unrender(descriptionSection);
+    const description = new DestinationDescription(this._destination);
+    render(detailsSection, description.getElement());
   }
 
   getTemplate() {
@@ -188,7 +198,7 @@ export class EventEdit extends AbstractComponent {
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Transfer</legend>
-              ${this._transferEvents.map((transferEvent) => `<div class="event__type-item">
+              ${TRANSFER_EVENTS.map((transferEvent) => `<div class="event__type-item">
                   <input id="event-type-${transferEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${transferEvent.toLowerCase()}"
                   ${transferEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${transferEvent}" for="event-type-${transferEvent}-${this._id}">${capitalizeFirstLetter(transferEvent)}</label>
@@ -196,7 +206,7 @@ export class EventEdit extends AbstractComponent {
             </fieldset>
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Activity</legend>
-              ${this._activityEvents.map((activityEvent) => `<div class="event__type-item">
+              ${ACTIVITY_EVENTS.map((activityEvent) => `<div class="event__type-item">
                   <input id="event-type-${activityEvent}-${this._id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${activityEvent.toLowerCase()}"
                   ${activityEvent === this._event ? `checked` : ``} >
                   <label class="event__type-label  event__type-label--${activityEvent}" for="event-type-${activityEvent}-${this._id}">${capitalizeFirstLetter(activityEvent)}</label>
@@ -205,15 +215,15 @@ export class EventEdit extends AbstractComponent {
           </div>
         </div>
         <div class="event__field-group  event__field-group--destination">
-          <label class="event__label  event__type-output" for="event-destination-${this._id} ${this._destinationComparator(this._event) ? this._destinationComparator(this._event) : this._destination}" list="destination-list-${this._id}">
-           ${this._event !== `sightseeing` ? this._eventComparator(this._event) : this._destinationComparator(this._event)}
+          <label class="event__label  event__type-output" for="event-destination-${this._id} ${this._event}" list="destination-list-${this._id}">
+           ${EventToPretext[this._event]}
           </label>
           <input class="event__input  event__input--destination" id="event-destination-${this._id}"
            type="text" name="event-destination"
            list="destination-list-${this._id}"
-           value="${this._destination}">
+           value="${this._destination.name}">
           <datalist id="destination-list-${this._id}">
-          ${this._destinationOptions.map((option) => `<option value="${option}"></option>`).join(``)}
+          ${this._destinations.map((destination) => `<option value="${destination.name}"></option>`).join(``)}
           </datalist>
         </div>
 
@@ -266,30 +276,28 @@ export class EventEdit extends AbstractComponent {
 <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 <div class="event__available-offers">
 ${this._offers
-      .filter((offer) => offer.type === this._event)
-      .map((el) => el.offers
         .map((offer) => `<div class="event__offer-selector">
               <input class="event__offer-checkbox
               visually-hidden"
-              id="event-offer-${offer.id(offer.name)}-${this._id}" type="checkbox" name="event-offer-${offer.id(offer.name)}" ${offer.isChecked ? `checked` : ``}>
-<label class="event__offer-label" for="event-offer-${offer.id(offer.name)}-${this._id}">
-  <span class="event__offer-title">${offer.name}</span>
+              id="event-offer-${offer.title}-${this._id}" type="checkbox" name="event-offer-${offer.title}" ${offer.accepted ? `checked` : ``}>
+<label class="event__offer-label" for="event-offer-${offer.title}-${this._id}">
+  <span class="event__offer-title">${offer.title}</span>
   +
   €&nbsp;<span class="event__offer-price">${offer.price}</span>
   </label>
-  </div>`).join(``))}
+  </div>`).join(``)}
         </section>` : ``}
-        <section class="event__section  event__section--destination">
+          <section class="event__section  event__section--destination">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">${this._description
-      .filter((el) => el.destination === this._destination)
-      .map((el) => el.description)}</p>
+          <p class="event__destination-description">${this._destination.description}</p>
           <div class="event__photos-container">
             <div class="event__photos-tape">
-            ${Array.from(this._photos).map(() => `<img class="event__photo" src="http://picsum.photos/300/150?r=${Math.random()}" alt="Event photo">`).join(``)}
+            ${this._destination.pictures ? Array.from(this._destination.pictures).map((picture) => `<img class="event__photo" src="${picture.src}"  alt="${picture.description}">`).join(``) : ``}
+            
             </div>
           </div>
         </section>
+          
       </section>
     </form>
   </li>`;
