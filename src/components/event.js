@@ -1,9 +1,12 @@
 import {AbstractComponent} from './abstract-conponent';
 import moment from "moment";
 import {getDuration} from './utils';
+import {EventToPretext} from './event-edit';
+
+const AMOUNT_OF_DISPLAYED_OFFERS = 3;
 
 export class Event extends AbstractComponent {
-  constructor({event, startTime, endTime, price, offers, destination, eventComparator, destinationComparator}) {
+  constructor({event, startTime, endTime, price, offers, destination}) {
     super();
     this._event = event;
     this._startTime = startTime;
@@ -11,8 +14,6 @@ export class Event extends AbstractComponent {
     this._price = price;
     this._offers = offers;
     this._destination = destination;
-    this._eventComparator = eventComparator;
-    this._destinationComparator = destinationComparator;
   }
 
   getTemplate() {
@@ -21,14 +22,12 @@ export class Event extends AbstractComponent {
       <div class="event__type">
         <img class="event__type-icon" width="42" height="42" src="img/icons/${this._event}.png" alt="Event type icon">
       </div>
-      <h3 class="event__title">${this._eventComparator(this._event)
-        .concat(`${this._event !== `sightseeing` ? `` : this._destinationComparator(this._event)}`)
-      .concat(` ${this._destination}`)}</h3>
+      <h3 class="event__title">${EventToPretext[this._event]} ${this._destination.name}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="${moment(this._startTime).format(`YYYY-MM-DDThh:mm`)}">${moment(this._startTime).format(`hh:mm`)}</time>
+          <time class="event__start-time" datetime="${moment(this._startTime).format(`DD.MM.YYYY HH:mm`)}">${moment(this._startTime).format(`HH:mm`)}</time>
           &mdash;
-          <time class="event__end-time" datetime="${moment(this._startTime).format(`YYYY-MM-DDThh:mm`)}">${moment(this._endTime).format(`hh:mm`)}</time>
+          <time class="event__end-time" datetime="${moment(this._endTime).format(`DD.MM.YYYY HH:mm`)}">${moment(this._endTime).format(`HH:mm`)}</time>
         </p>
         <p class="event__duration">${getDuration(this._startTime, this._endTime)}</p>
       </div>
@@ -39,14 +38,12 @@ export class Event extends AbstractComponent {
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
       ${this._offers
-      .filter((offer) => offer.type === this._event)
-      .map((el) => el.offers
-        .filter((offer) => offer.isChecked === true)
+        .filter((offer) => offer.accepted === true)
         .map((offer) => `<li class="event__offer">
-                  <span class="event__offer-title">${offer.name}</span>
+                  <span class="event__offer-title">${offer.title}</span>
                   &plus;
                   &euro;&nbsp;<span class="event__offer-price">${offer.price}</span>
-                 </li>`).join(``))}
+                 </li>`).slice(0, AMOUNT_OF_DISPLAYED_OFFERS).join(``)}
       </ul>
 
       <button class="event__rollup-btn" type="button">

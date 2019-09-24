@@ -4,7 +4,12 @@ export class RouteInfo extends AbstractComponent {
   constructor(dataArray) {
     super();
     this._dataArray = dataArray;
+    this._init();
+  }
+
+  _init() {
     this._getMoneySumToMarkup();
+    this._getDestinations();
   }
 
   _getMoneySumToMarkup() {
@@ -34,23 +39,26 @@ export class RouteInfo extends AbstractComponent {
   _getDestinations() {
     this._destinations = [];
     for (let events of this._dataArray.values()) {
-      events.forEach((event) => this._destinations.push(event.destination));
+      if (events.length > 1) {
+        events.forEach((event) => this._destinations.push(event.destination.name));
+      } else {
+        this._destinations.push(events[0].destination.name);
+      }
     }
-    return [...new Set(this._destinations)];
   }
 
   _renderDestinationInConditions() {
     let result = ``;
-    if (!this._getDestinations().length) {
+    if (!this._destinations.length) {
       return result;
     }
-    if (this._getDestinations().length === 1) {
-      result = this._getDestinations();
-    } else if (this._getDestinations().length < 3) {
-      result = this._getDestinations().reduce((a, b) => a.concat(` &mdash; ${b}`));
+    if (this._destinations.length === 1) {
+      result = this._destinations;
+    } else if (this._destinations.length < 3) {
+      result = this._destinations.reduce((a, b) => a.concat(` &mdash; ${b}`));
     } else {
-      result = this._getDestinations().slice(0, 1).concat(` &mdash; ... &mdash; `)
-        .concat(this._getDestinations().slice(-1)).join(``);
+      result = this._destinations.slice(0, 1).concat(` &mdash; ... &mdash; `)
+        .concat(this._destinations.slice(-1)).join(``);
     }
     return result;
   }

@@ -7,6 +7,8 @@ export const createElement = (template) => {
 
 };
 
+export const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
+
 export const render = (container, element, postition = `beforeend`) => {
   switch (postition) {
     case `afterbegin`:
@@ -34,11 +36,11 @@ export const getHumanFriendlyTime = (duration) => {
   duration = Math.abs(duration) / 60000;
   let result = ``;
   if (duration > 1139) {
-    result = `${Math.floor(duration / 1140)}D ${Math.floor(duration % 24)}H ${duration % 60}M`;
+    result = `${Math.floor(duration / 1140)}D ${Math.floor(duration % 24)}H ${Math.floor(duration % 60)}M`;
   } else if (duration > 59) {
-    result = `${Math.floor(duration / 60)}H ${duration % 60}M`;
+    result = `${Math.floor(duration / 60)}H ${Math.floor(duration % 60)}M`;
   } else if (duration < 59) {
-    result = `${duration}M`;
+    result = `${Math.floor(duration)}M`;
   }
   return result;
 };
