@@ -41,9 +41,9 @@ export class PointController {
       }
     };
 
-    this._currentView.getElement()
-      .querySelector(`.event__type-toggle`)
-      .addEventListener(`blur`, (evt) => this._currentView.onBlurCloseEventList(evt));
+    // this._currentView.getElement()
+    //   .querySelector(`.event__type-toggle`)
+    //   .addEventListener(`blur`, (evt) => this._currentView.onBlurCloseEventList(evt));
 
     this._currentView.getElement()
       .querySelector(`.event__input`)

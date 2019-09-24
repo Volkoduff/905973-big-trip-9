@@ -30,29 +30,41 @@ export class TripController {
     this._onChangeView = this._onChangeView.bind(this);
     this._dayIndex = null;
     this._eventsPerDayMap = null;
-  }
-
-  renderTrip(mode = RenderSortMode.DEFAULT) {
-    this._reRenderSort();
-    this._reRenderDayList();
-    switch (mode) {
-      case RenderSortMode.DEFAULT:
-
-        this._renderEventsInTheirDays();
-        break;
-      case RenderSortMode.DURATION:
-        this._renderDurationSorted();
-    }
-    this._dayIndex = null;
+    this._areEventsEmpty = false;
   }
 
   setEvents(events, destinations, offers) {
     this._destinations = destinations;
     this._events = events;
     this._offers = offers;
-    this._getDataToTheProperMapStructure();
-    this.renderTrip(this._currentSort);
+    this._getDataMap();
+    this._renderToProperSort(this._currentSort);
+  }
+
+  _renderToProperSort(mode = RenderSortMode.DEFAULT) {
+    switch (mode) {
+      case RenderSortMode.DEFAULT:
+        this.renderTrip();
+        break;
+      case RenderSortMode.DURATION:
+        this._reRenderDayList();
+        this._renderDurationSorted();
+        this._renderHeaderComponents();
+        this._dayIndex = null;
+        break;
+      case RenderSortMode.PRICE:
+        this._reRenderDayList();
+        this._renderPriceSorted();
+        this._renderHeaderComponents();
+        break;
+    }
+  }
+  renderTrip() {
+    this._reRenderSort();
+    this._reRenderDayList();
+    this._renderEventsInTheirDays();
     this._renderHeaderComponents();
+    this._dayIndex = null;
   }
 
   renderFilteredFutureEvents() {
@@ -133,38 +145,41 @@ export class TripController {
     }
     unrender(this._daysList.getElement());
     this._daysList.removeElement();
-    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     switch (evt.target.dataset.sortType) {
       case `by-event`:
         this.renderTrip();
         break;
       case `by-time`:
         this._currentSort = RenderSortMode.DURATION;
-        this.renderTrip(this._currentSort);
+        this._renderToProperSort(this._currentSort);
         break;
       case `by-price`:
-        this._renderPriceSorted();
+        this._currentSort = RenderSortMode.PRICE;
+        this._renderPriceSorted(this._currentSort);
         break;
     }
   }
   _renderPriceSorted() {
     this._currentSort = RenderSortMode.PRICE;
     this._renderDayContainer();
+    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getSortedByPriceEvents()
       .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
     render(this._day, this._eventsList);
   }
   _renderDurationSorted() {
-    this._currentSort = RenderSortMode.DURATION;
     this._renderDayContainer();
+    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getSortedByDurationEvents()
       .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
     render(this._day, this._eventsList);
   }
 
   onDeleteCheck() {
+    debugger
     if (!this._events.length) {
-      render(this._container, this._noPoints.getElement(this._events));
+      // render(this._container, this._noPoints.getElement(this._events));
+      render(this._container, this._noPoints.getElement());
       unrender(this._sort.getElement());
       this._areEventsEmpty = true;
     }
@@ -180,7 +195,7 @@ export class TripController {
   }
 
   // Обработка данных в Мапу НАЧАЛОСЬ
-  _getDataToTheProperMapStructure() {
+  _getDataMap() {
     this._eventsPerDayMap = new Map();
     this._getUniqueSortedDates().forEach((date) => this._eventsPerDayMap
       .set(date, this._getMapFilledProperValues(date)));
