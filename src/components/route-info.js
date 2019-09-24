@@ -39,7 +39,11 @@ export class RouteInfo extends AbstractComponent {
   _getDestinations() {
     this._destinations = [];
     for (let events of this._dataArray.values()) {
-      events.forEach((event) => this._destinations.push(event.destination.name));
+      if (events.length > 1) {
+        events.forEach((event) => this._destinations.push(event.destination.name));
+      } else {
+        this._destinations.push(events[0].destination.name);
+      }
     }
   }
 

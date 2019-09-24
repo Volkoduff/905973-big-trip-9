@@ -30,7 +30,6 @@ export class EventEdit extends AbstractComponent {
   constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, container, destinations, allOffers) {
     super();
     this._event = event;
-    // this._container = container;
     this._destination = destination;
     this._offers = offers;
     this._startTime = startTime;
@@ -75,16 +74,15 @@ export class EventEdit extends AbstractComponent {
   }
 
   onClickRenderEvent() {
-    if (!this._isEventCreating) {
-      this._isEventCreating = true;
-      if (!this.newForm) {
-        this._createNewEventForm();
-      } else {
-        EventEdit.show(this.newForm);
-      }
-      this._disableAddNewButton();
+    this._isEventCreating = true;
+    if (!this.newForm) {
+      this._createNewEventForm();
+    } else {
+      EventEdit.show(this.newForm);
     }
+    this._disableAddNewButton();
   }
+
   _disableAddNewButton() {
     const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
     addNewButton.disabled = true;

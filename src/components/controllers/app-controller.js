@@ -55,8 +55,14 @@ export class AppController extends AbstractComponent {
   }
 
   _onDataChange(newData, oldData) {
-    const index = this.tripController.getEvents().findIndex((event) => event === oldData);
-    if (newData === null && index !== -1) {
+    this._currentEvents = this.tripController.getEvents();
+
+    if (!Array.isArray(this._currentEvents)) {
+      this.index = 1;
+    } else {
+      this.index = this._currentEvents.findIndex((event) => event === oldData);
+    }
+    if (newData === null && this.index !== -1) {
       this.api.deleteEvent({
         id: oldData.id
       })

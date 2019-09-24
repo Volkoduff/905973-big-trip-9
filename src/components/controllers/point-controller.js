@@ -9,9 +9,10 @@ export const Mode = {
 };
 
 export class PointController {
-  constructor(container, event, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, destinations, allOffers) {
+  constructor(container, event, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, destinations, allOffers, areEventsEmpty) {
     this._container = container;
     this._event = event;
+    this._areEventsEmpty = areEventsEmpty;
     this._allOffers = allOffers;
     this._destinations = destinations;
     this._onDeleteCheck = onDeleteCheck;
@@ -95,6 +96,7 @@ export class PointController {
       removeEventListener(`keydown`, onEscKeyDown);
       if (mode === Mode.ADD_NEW) {
         this._currentView.cancelNewEvent(evt);
+
       }
     };
 
