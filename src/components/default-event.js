@@ -3,22 +3,16 @@ import moment from "moment";
 
 export class DefaultEvent extends AbstractComponent {
 
-  static getDefaultEvent(events) {
+  static getDefaultEvent(events = [], destinations, allOffers) {
     const newId = events.length;
-    const defaultEvent = Object.assign({}, events[0]);
-    if (defaultEvent) {
-      defaultEvent.destination = {
-        pictures: null,
-        src: null,
-        name: ``,
-        description: ``,
-      };
-      defaultEvent.startTime = moment();
-      defaultEvent.id = newId;
-      defaultEvent.endTime = moment();
-      defaultEvent.price = `0`;
-      defaultEvent.event = `bus`;
-    }
-    return defaultEvent;
+    return {
+      destination: destinations[0],
+      offers: allOffers[0],
+      startTime: moment().format(),
+      endTime: moment().format(),
+      id: newId,
+      price: `0`,
+      event: `bus`,
+    };
   }
 }

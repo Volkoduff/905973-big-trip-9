@@ -26,6 +26,7 @@ export class PointController {
     if (mode === Mode.ADD_NEW) {
       document.querySelector(`.trip-main__event-add-btn`)
         .addEventListener(`click`, () => this._eventEdit.onClickRenderEvent());
+
       this._eventEdit = new EventEdit(this._event, this._sort, this._destinations, this._allOffers);
     } else if (Mode.DEFAULT) {
       this._eventView = new Event(this._event);
@@ -83,7 +84,7 @@ export class PointController {
       for (const key in entry) {
         newEventDataMask[key] = entry[key];
         if (key === `startTime` || key === `endTime`) {
-          newEventDataMask[key] = +moment(newEventDataMask[key]).format(`x`);
+          newEventDataMask[key] = +moment(newEventDataMask[key], `DD.MM.YYYY HH:mm`).format(`x`);
         } else if (key === `price`) {
           newEventDataMask[key] = +newEventDataMask[key];
         } else if (key === `isFavorite`) {
@@ -100,7 +101,6 @@ export class PointController {
     const onDeleteDataChange = (evt) => {
       evt.preventDefault();
       this._onDataChange(null, this._event);
-      onSubmitDataChange(evt);
       this._onDeleteCheck();
     };
 
@@ -156,14 +156,14 @@ export class PointController {
 
     if (mode === Mode.DEFAULT) {
       render(this._eventsList, this._eventView.getElement(event, this._index));
-    } else if (mode === `ADD_NEW_EVENT`) {
-      // Ничего не рендерим так как в компоненте есть метод для этого, только если для пустого окна
-      // render(this._sort.getElement(), this._currentView.getElement(), `beforebegin`);
     }
+    // else if (mode === `ADD_NEW_EVENT`) {
+    //   // Ничего не рендерим так как в компоненте есть метод для этого, только если для пустого окна
+    //   // render(this._sort.getElement(), this._currentView.getElement(), `beforebegin`);
+    // }
   }
 
   setDefaultView() {
-    debugger
     if ((this._container.contains(this._eventEdit.getElement()))) {
       this._container.querySelector(`.trip-events__list`)
         .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());

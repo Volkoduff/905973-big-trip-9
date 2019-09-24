@@ -7,6 +7,8 @@ export const createElement = (template) => {
 
 };
 
+export const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
+
 export const render = (container, element, postition = `beforeend`) => {
   switch (postition) {
     case `afterbegin`:

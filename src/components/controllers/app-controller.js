@@ -3,11 +3,9 @@ import {AbstractComponent} from './../abstract-conponent';
 import {Statistics} from './../stats';
 import {NavigationMenu} from './../navigation-menu';
 import {Filter} from './../filter';
-import {filterData, menuData} from './../data';
-import {render, unrender} from './../utils';
+import {render} from './../utils';
 import {API} from "../api";
 import {ModelEvent} from "../model-event";
-
 
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://htmlacademy-es-9.appspot.com/big-trip`;
@@ -15,72 +13,69 @@ const END_POINT = `https://htmlacademy-es-9.appspot.com/big-trip`;
 export class AppController extends AbstractComponent {
   constructor(tripEventsContainer, controlsContainer) {
     super();
-    this._controlsContainer = controlsContainer;
-    this._tripEventsContainer = tripEventsContainer;
+    this.controlsContainer = controlsContainer;
+    this.tripEventsContainer = tripEventsContainer;
     this._onDataChange = this._onDataChange.bind(this);
   }
 
   init() {
     this.infoContainer = document.querySelector(`.trip-main__trip-info`);
-    this._tripController = new TripController(this._tripEventsContainer, this.infoContainer, this._onDataChange);
+    this.tripController = new TripController(this.tripEventsContainer, this.infoContainer, this._onDataChange);
 
     this.api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 
     this.api.getDestinations()
       .then((destinations) => {
-        this._destinations = destinations;
+        this.destinations = destinations;
       });
     this.api.getOffers()
-      .then((destinations) => {
-        this._offers = destinations;
+      .then((offers) => {
+        this.offers = offers;
       });
     this.api.getEvents()
-      .then((events) => this._tripController.setEvents(events, this._destinations, this._offers))
-      .then(() => this._tripController.renderNewEvent(this._destinations));
+      .then((events) => this.tripController.setEvents(events, this.destinations, this.offers))
+      .then(() => this.tripController.renderNewEvent(this.destinations, this.offers));
 
-    this._navigationMenu = new NavigationMenu(menuData);
+    this._navigationMenu = new NavigationMenu();
 
     [...this._navigationMenu.getElement().children]
       .forEach((tripTab) => tripTab.addEventListener(`click`, (evt) => this._onClickMenuSwitch(evt)));
-    render(this._controlsContainer, this._navigationMenu.getElement());
+    render(this.controlsContainer, this._navigationMenu.getElement());
 
-    this._filter = new Filter(filterData);
+    this._filter = new Filter();
     const filterElements = this._filter.getElement().querySelectorAll(`.trip-filters__filter`);
     filterElements.forEach((el) => el.addEventListener(`click`, (evt) => {
       this._onClickFilterSwitch(evt);
     }));
-    render(this._controlsContainer, this._filter.getElement());
+    render(this.controlsContainer, this._filter.getElement());
 
     this._statistics = new Statistics();
-    render(this._tripEventsContainer, this._statistics.getElement(), `afterend`);
+    render(this.tripEventsContainer, this._statistics.getElement(), `afterend`);
     this._statistics.hide();
   }
 
   _onDataChange(newData, oldData) {
-    const index = this._tripController.getEvents().findIndex((event) => event === oldData);
+    const index = this.tripController.getEvents().findIndex((event) => event === oldData);
     if (newData === null && index !== -1) {
       this.api.deleteEvent({
         id: oldData.id
       })
         .then(() => this.api.getEvents())
-          .then((events) => this._tripController.setEvents(events, this._destinations, this._offers));
+          .then((events) => this.tripController.setEvents(events, this.destinations, this.offers));
     } else if (oldData === null) {
       this.api.createEvent({
-        // id: newData.id,
         data: ModelEvent.toRAW(newData)
       })
-        .then(() => this.api.getEvents()
-          .then((events) => this._tripController.setEvents(events, this._destinations, this._offers)));
+        .then(() => this.api.getEvents())
+          .then((events) => this.tripController.setEvents(events, this.destinations, this.offers));
     } else {
       this.api.updateEvent({
         id: newData.id,
         data: ModelEvent.toRAW(newData)
       })
-        .then(() => this.api.getEvents()
-          .then((events) => this._tripController.setEvents(events, this._destinations, this._offers)));
+        .then(() => this.api.getEvents())
+          .then((events) => this.tripController.setEvents(events, this.destinations, this.offers));
     }
-
-    // Возможно настало время перенести сорт в отдельный контроллер
   }
 
   _onClickMenuSwitch(evt) {
@@ -91,19 +86,19 @@ export class AppController extends AbstractComponent {
       case `Stats`:
         evt.target.previousElementSibling.classList.remove(`trip-tabs__btn--active`);
         evt.target.classList.add(`trip-tabs__btn--active`);
-        this._tripController.hide();
+        this.tripController.hide();
         this._statistics.show();
-        this._statistics.createCharts(this._tripController.getEvents());
+        this._statistics.createCharts(this.tripController.getEvents());
         break;
       case `Table`:
         evt.target.nextElementSibling.classList.remove(`trip-tabs__btn--active`);
         evt.target.classList.add(`trip-tabs__btn--active`);
-        this._tripController.show();
+        this.tripController.show();
         this._statistics.hide();
         break;
       case `New event`:
       // debugger
-      // this._tripController.show();
+      // this.tripController.show();
       // this._statistics.hide();
       // break;
     }
@@ -115,13 +110,13 @@ export class AppController extends AbstractComponent {
     }
     switch (evt.target.textContent) {
       case `everything`:
-        this._tripController.renderTrip();
+        this.tripController.renderTrip();
         break;
       case `future`:
-        this._tripController.renderFilteredFutureEvents();
+        this.tripController.renderFilteredFutureEvents();
         break;
       case `past`:
-        this._tripController.renderFilteredPastEvents();
+        this.tripController.renderFilteredPastEvents();
         break;
     }
   }

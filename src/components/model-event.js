@@ -29,7 +29,6 @@ export class ModelEvent {
   }
 
   static toRAW(data) {
-    debugger
     return {
       'base_price': data.price,
       'date_from': moment(data.startTime).toISOString(),
