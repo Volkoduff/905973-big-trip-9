@@ -1,22 +1,20 @@
-import {DaysList} from './../days-list';
-import {EventsList} from './../events-list';
-import {Day} from './../day';
-import {RouteInfo} from './../route-info';
-import {Sort} from './../sort';
-import {NoPoints} from './../no-points';
-import {allDestinations, allOffers} from './../controllers/app-controller';
-import {PointController} from "./point-controller";
-import {SortController} from "./sort-controller";
 import {render, unrender, RenderSortMode, Mode, Position} from './../utils';
+import {allOffers} from './../controllers/app-controller';
+import DaysList from './../days-list';
+import EventsList from './../events-list';
+import Day from './../day';
+import RouteInfo from './../route-info';
+import Sort from './../sort';
+import NoPoints from './../no-points';
+import PointController from "./point-controller";
+import SortController from "./sort-controller";
 import moment from "moment";
 
-
 const NO_DATES = `no-dates`;
-
 const infoContainer = document.querySelector(`.trip-main__trip-info`);
 const addNewEventButton = document.querySelector(`.trip-main__event-add-btn`);
 
-export class TripController {
+export default class TripController {
   constructor(container, onDataChange) {
     this._container = container;
     this._sort = new Sort();
@@ -53,6 +51,7 @@ export class TripController {
     this._dayIndex = null;
     this._areEventsEmpty = false;
   }
+
   renderFilteredFutureEvents() {
     this._reRenderSort();
     this._reRenderDayList();
@@ -85,15 +84,33 @@ export class TripController {
     return this._events;
   }
 
+  onDeleteCheck() {
+    if (this._events.length <= 1) {
+      unrender(this._sort.getElement());
+      this._sort.removeElement();
+      render(this._container, this._noPoints.getElement());
+      this._areEventsEmpty = true;
+    }
+  }
+
+  renderLoadingPlug() {
+    const loadingMessageMarkup = `<p class="trip-events__msg">Loading...</p>`;
+    this._container.insertAdjacentHTML(Position.BEGIN, loadingMessageMarkup);
+  }
+
+  unRenderLoadingPlug() {
+    this._container.querySelector(`.trip-events__msg`).remove();
+  }
+
   _getDefaultEvent() {
     const newId = this._events.length;
     const defaultEvent = {
-      destination: allDestinations[0],
+      destination: ``,
       offers: allOffers[allOffers.findIndex((offers) => offers.type === `bus`)].offers,
       startTime: moment().format(),
       endTime: moment().format(),
       id: newId,
-      price: `0`,
+      price: ``,
       event: `bus`,
     };
     this._creatingCard = new PointController(this._container, defaultEvent, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
@@ -116,7 +133,7 @@ export class TripController {
   _renderEventsInTheirDays() {
     for (let date of this._eventsPerDayMap.keys()) {
       this._dayIndex++;
-      this._day = new Day(date, this._dayIndex).getElement(); // создаем новый день и передаем ему ключ(дату)
+      this._day = new Day(date, this._dayIndex).getElement();
       render(this._daysList.getElement(), this._day);
       this._eventsList = new EventsList().getElement();
       const dataPoints = this._eventsPerDayMap.get(date);
@@ -185,20 +202,10 @@ export class TripController {
     render(this._day, this._eventsList);
   }
 
-  onDeleteCheck() {
-    if (this._events.length <= 1) {
-      unrender(this._sort.getElement());
-      this._sort.removeElement();
-      render(this._container, this._noPoints.getElement());
-      this._areEventsEmpty = true;
-    }
-  }
-
   _onChangeView() {
     this._subscriptions.forEach((subscription) => subscription());
   }
 
-  //  -----  Обработка данных в Мапу НАЧАЛОСЬ -----
   _getDataMap() {
     this._eventsPerDayMap = new Map();
     if (Array.isArray(this._events)) {
@@ -207,9 +214,11 @@ export class TripController {
       this._eventsPerDayMap.set(this._getDate(), this._events);
     }
   }
+
   _getDate() {
     return moment(this._events.startTime).format(`MMM DD`);
   }
+
   _getUniqueSortedDates() {
     const sortedTime = this._events
       .sort((a, b) => a.startTime - b.startTime)
@@ -225,7 +234,6 @@ export class TripController {
     });
     return properEvents;
   }
-  //  ----  Обработка данных в Мапу ЗАКОНЧИЛОСЬ -----
 
   _renderSort() {
     this._sort = new Sort();

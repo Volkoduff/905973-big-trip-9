@@ -1,6 +1,6 @@
 import moment from "moment";
 
-export class SortController {
+export default class SortController {
   constructor(sort, eventsPerDayMap) {
     this._sort = sort;
     this._eventsPerDayMap = eventsPerDayMap;

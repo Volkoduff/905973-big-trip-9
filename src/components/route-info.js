@@ -1,6 +1,6 @@
-import {AbstractComponent} from './abstract-component';
+import AbstractComponent from './abstract-component';
 
-export class RouteInfo extends AbstractComponent {
+export default class RouteInfo extends AbstractComponent {
   constructor(dataArray) {
     super();
     this._dataArray = dataArray;
