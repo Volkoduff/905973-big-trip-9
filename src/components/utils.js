@@ -48,7 +48,7 @@ export const Position = {
   END: `beforeend`,
   BEFORE: `beforebegin`,
   AFTER: `afterend`
-}
+};
 
 export const Mode = {
   DEFAULT: `default`,

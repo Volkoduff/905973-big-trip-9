@@ -1,6 +1,6 @@
 import {AbstractComponent} from './abstract-component';
 import {EventIcon} from './event-icon';
-import {Sort} from './sort';
+// import {Sort} from './sort';
 import {EventPlaceholder} from './event-placeholder';
 import {EventOffers} from './event-offers';
 import {allDestinations, allOffers} from './controllers/app-controller';
@@ -126,9 +126,8 @@ export class EventEdit extends AbstractComponent {
   }
 
   _createNewEventForm() {
-    if (this._isFirstEvent) {
-
-    }
+    // if (this._isFirstEvent) {
+    // }
     this._container = document.querySelector(`.trip-events__trip-sort`);
     this.newForm = this.getElement().querySelector(`form`);
     this.newForm.classList.add(`trip-events__item`);
@@ -138,8 +137,7 @@ export class EventEdit extends AbstractComponent {
   _isFirstEvent() {
     const noPointsElement = document.querySelector(`.trip-events__msg`);
     unrender(noPointsElement);
-    const sort = new Sort();
-
+    // const sort = new Sort();
   }
 
   _transformDeleteButton() {
