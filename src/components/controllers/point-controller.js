@@ -1,53 +1,37 @@
 import {Event} from './../event';
 import {EventEdit} from './../event-edit';
-import {render} from './../utils';
+import {render, unrender, Action, Mode} from './../utils';
+import {allOffers} from './app-controller';
 import moment from "moment";
 
-export const Mode = {
-  DEFAULT: `default`,
-  ADD_NEW: `add-new`,
+const KeyCode = {
+  ESCAPE: `Escape`,
+  ESC: `ESC`,
 };
 
 export class PointController {
-  constructor(container, event, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, destinations, allOffers, areEventsEmpty) {
+  constructor(container, data, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode) {
     this._container = container;
-    this._event = event;
-    this._areEventsEmpty = areEventsEmpty;
-    this._allOffers = allOffers;
-    this._destinations = destinations;
+    this._data = data;
     this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
-    this._sort = sort;
+    this._event = new Event(data);
+    this._eventEdit = new EventEdit(data);
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
+
     this.init(mode);
   }
 
   init(mode) {
+    let currentView = this._event;
     if (mode === Mode.ADD_NEW) {
-      document.querySelector(`.trip-main__event-add-btn`)
-        .addEventListener(`click`, () => this._eventEdit.onClickRenderEvent());
-
-      this._eventEdit = new EventEdit(this._event, this._sort, this._destinations, this._allOffers);
-    } else if (Mode.DEFAULT) {
-      this._eventView = new Event(this._event);
-      this._eventEdit = new EventEdit(this._event, this._container, this._destinations, this._allOffers);
+      this._eventEdit.getElement().classList.add(`trip-events__item`);
+      this._eventEdit.getElement().querySelector(`.event__favorite-btn`).remove();
+      this._eventEdit.getElement().querySelector(`.event__rollup-btn`).remove();
+      currentView = this._eventEdit;
     }
-    this._currentView = this._eventEdit;
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === `Escape`) {
-        this._onChangeView();
-        document.removeEventListener(`keydown`, onEscKeyDown);
-      }
-    };
-
-    // this._currentView.getElement()
-    //   .querySelector(`.event__type-toggle`)
-    //   .addEventListener(`blur`, (evt) => this._currentView.onBlurCloseEventList(evt));
-
-    this._currentView.getElement()
-      .querySelector(`.event__input`)
+    this._eventEdit.getElement().querySelector(`.event__input`)
       .addEventListener(`focus`, () => {
         removeEventListener(`keydown`, onEscKeyDown);
       });
@@ -56,99 +40,80 @@ export class PointController {
       evt.preventDefault();
       let formData;
       if (evt.target.parentNode.tagName === `LI`) {
-        formData = new FormData(this._currentView.getElement().querySelector(`.event--edit`));
+        formData = new FormData(this._eventEdit.getElement().querySelector(`.event--edit`));
       } else {
-        formData = new FormData(this._currentView.newForm);
+        formData = new FormData(this._eventEdit.newForm);
       }
       formData.getAll(`textarea`);
-      const newEventDataMask = Object.assign({}, this._event);
-      const entry = {
-        destination: this._currentView._destination,
-        event: formData.get(`event-type`),
-        startTime: formData.get(`event-start-time`),
-        endTime: formData.get(`event-end-time`),
-        price: formData.get(`event-price`),
-        isFavorite: formData.get(`event-favorite`),
-      };
-      const allOfferInputs = evt.target.querySelectorAll(`.event__offer-checkbox`);
-      const offerInputCheckFlags = Array.from(allOfferInputs)
-        .map((input) => input.checked);
 
-      const indexOfOffer = this._allOffers.findIndex((offer) => offer.type === entry.event);
-      this._checkedOffers = this._allOffers[indexOfOffer].offers;
-      this._checkedOffers.map((offer, it) => {
-        offer.accepted = offerInputCheckFlags[it];
+      this._data.destination = this._eventEdit._destination;
+      this._data.event = formData.get(`event-type`);
+      this._data.startTime = +moment(formData.get(`event-start-time`), `DD.MM.YYYY HH:mm`).format(`x`);
+      this._data.endTime = +moment(formData.get(`event-end-time`), `DD.MM.YYYY HH:mm`).format(`x`);
+      this._data.price = +formData.get(`event-price`);
+      this._data.isFavorite = formData.get(`event-favorite`) !== null;
+      this._data.offers = allOffers[allOffers.findIndex((it) => it.type === formData.get(`event-type`))].offers;
+      this._data.offers.forEach((el, it) => {
+        el.accepted = PointController._getOffersInputFlag(evt)[it];
       });
-      newEventDataMask.offers = this._checkedOffers;
 
-      // eslint-disable-next-line guard-for-in
-      for (const key in entry) {
-        newEventDataMask[key] = entry[key];
-        if (key === `startTime` || key === `endTime`) {
-          newEventDataMask[key] = +moment(newEventDataMask[key], `DD.MM.YYYY HH:mm`).format(`x`);
-        } else if (key === `price`) {
-          newEventDataMask[key] = +newEventDataMask[key];
-        } else if (key === `isFavorite`) {
-          newEventDataMask[key] = newEventDataMask[key] !== null;
-        }
-      }
-      this._onDataChange(newEventDataMask, mode === Mode.DEFAULT ? this._event : null);
+      this._onDataChange(mode === Mode.DEFAULT ? Action.UPDATE : Action.CREATE, this._data, this._eventEdit);
       removeEventListener(`keydown`, onEscKeyDown);
-      if (mode === Mode.ADD_NEW) {
-        this._currentView.cancelNewEvent(evt);
+    };
 
+    const onEscKeyDown = (evt) => {
+      if (evt.key === KeyCode.ESCAPE || evt.key === KeyCode.ESC) {
+        if (mode === Mode.DEFAULT) {
+          this._onChangeView();
+          removeEventListener(`keydown`, onEscKeyDown);
+        } else if (mode === Mode.ADDING) {
+          unrender(currentView.getElement());
+          currentView.removeElement();
+        }
+        document.removeEventListener(`keydown`, onEscKeyDown);
       }
     };
 
-    const onDeleteDataChange = (evt) => {
-      evt.preventDefault();
-      this._onDataChange(null, this._event);
-      this._onDeleteCheck();
-    };
-
-    this._currentView.getElement()
-      .querySelector(`.event__input`)
+    this._eventEdit.getElement().querySelector(`.event__input`)
       .addEventListener(`blur`, () => {
         addEventListener(`keydown`, onEscKeyDown);
       });
 
     if (mode === Mode.DEFAULT) {
-      this._currentView.getElement()
-        .querySelector(`.event__reset-btn`)
-        .addEventListener(`click`, onDeleteDataChange);
+      this._eventEdit.getElement().querySelector(`.event__reset-btn`)
+        .addEventListener(`click`, (evt) => {
+          evt.preventDefault();
+          this._onDataChange(Action.DELETE, this._data, this._eventEdit);
+          this._onDeleteCheck();
+        });
 
-      this._currentView.getElement()
-        .querySelector(`.event--edit`)
+      this._eventEdit.getElement().querySelector(`.event--edit`)
         .addEventListener(`submit`, onSubmitDataChange);
 
-      this._eventView.getElement()
-        .querySelector(`.event__rollup-btn`)
+      this._event.getElement().querySelector(`.event__rollup-btn`)
         .addEventListener(`click`, () => {
           this._onChangeView();
           this._container.querySelector(`.trip-events__list`)
-            .replaceChild(this._currentView.getElement(), this._eventView.getElement());
+            .replaceChild(this._eventEdit.getElement(), this._event.getElement());
           addEventListener(`keydown`, onEscKeyDown);
         });
 
-      this._currentView.getElement()
-        .querySelector(`.event__rollup-btn`)
+      this._eventEdit.getElement().querySelector(`.event__rollup-btn`)
         .addEventListener(`click`, () => {
           this._onChangeView();
           removeEventListener(`keydown`, onEscKeyDown);
         });
 
     } else if (mode === Mode.ADD_NEW) {
-      this._currentView.getElement()
-        .querySelector(`.event--edit`)
+      currentView.getElement().querySelector(`.event--edit`)
         .addEventListener(`submit`, onSubmitDataChange);
     }
 
-    const destinationInput = this._currentView.getElement().querySelector(`.event__input--destination`);
+    const destinationInput = this._eventEdit.getElement().querySelector(`.event__input--destination`);
+    destinationInput.addEventListener(`change`, (evt) => this._eventEdit.onchangeDestination(evt, mode));
 
-    destinationInput.addEventListener(`change`, (evt) => this._currentView.onchangeDestination(evt, mode));
-
-    [...this._currentView.getElement().querySelectorAll(`.event__type-input`)]
-      .forEach((el) => el.addEventListener(`click`, (evt) => this._currentView.onClickChangeEventType(evt, mode)));
+    [...this._eventEdit.getElement().querySelectorAll(`.event__type-input`)]
+      .forEach((el) => el.addEventListener(`click`, (evt) => this._eventEdit.onClickChangeEventType(evt, mode)));
 
     destinationInput.addEventListener(`keydown`, (evt) => {
       if (evt.key !== `Backspace` && evt.key !== `Escape`) {
@@ -157,18 +122,22 @@ export class PointController {
     });
 
     if (mode === Mode.DEFAULT) {
-      render(this._eventsList, this._eventView.getElement(event, this._index));
+      render(this._eventsList, currentView.getElement());
+    } else if (mode === Mode.ADD_NEW) {
+      this._eventEdit.onClickRenderEvent();
     }
-    // else if (mode === `ADD_NEW_EVENT`) {
-    //   // Ничего не рендерим так как в компоненте есть метод для этого, только если для пустого окна
-    //   // render(this._sort.getElement(), this._currentView.getElement(), `beforebegin`);
-    // }
   }
 
+
   setDefaultView() {
-    if ((this._container.contains(this._eventEdit.getElement()))) {
+    if (this._container.contains(this._eventEdit.getElement())) {
       this._container.querySelector(`.trip-events__list`)
-        .replaceChild(this._eventView.getElement(), this._eventEdit.getElement());
+        .replaceChild(this._event.getElement(), this._eventEdit.getElement());
     }
+  }
+  static _getOffersInputFlag(evt) {
+    const allOfferInputs = evt.target.querySelectorAll(`.event__offer-checkbox`);
+    return Array.from(allOfferInputs)
+      .map((input) => input.checked);
   }
 }

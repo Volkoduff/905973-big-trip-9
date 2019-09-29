@@ -1,4 +1,4 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 import {getHumanFriendlyTime} from './utils';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';

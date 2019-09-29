@@ -1,4 +1,4 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 import {EventIcon} from './event-icon';
 import {EventPlaceholder} from './event-placeholder';
 import {EventOffers} from './event-offers';

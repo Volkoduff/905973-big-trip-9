@@ -41,11 +41,11 @@ export class SortController {
       .filter((el) => el.startTime > moment().format(`x`))
       .filter((el) => moment(el.startTime).format(`DD`) > this._currentDate);
   }
+
   getFilteredFinishedEvents() {
     this._currentDate = moment().format(`DD`);
     return this._getEventsFromMap(this._eventsPerDayMap)
       .filter((el) => el.startTime < moment().format(`x`))
       .filter((el) => moment(el.endTime).format(`DD`) < this._currentDate);
   }
-
 }

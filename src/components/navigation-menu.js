@@ -1,4 +1,4 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 const MENU_NAMES = [`Table`, `Stats`];
 
 export class NavigationMenu extends AbstractComponent {

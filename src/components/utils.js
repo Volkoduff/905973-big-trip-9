@@ -1,26 +1,81 @@
 import moment from "moment";
 
+export const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
+
+export const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
+export const EventToPretext = {
+  'bus': `Bus to`,
+  'check-in': `Check-in in`,
+  'drive': `Drive to`,
+  'flight': `Flight to`,
+  'restaurant': `Restaurant in`,
+  'ship': `Ship to`,
+  'sightseeing': `Sightseeing in`,
+  'taxi': `Taxi to`,
+  'train': `Train to`,
+  'transport': `Transport to`,
+  'trip': `Trip to`,
+};
+
+export const RenderSortMode = {
+  DEFAULT: `by-event`,
+  DURATION: `by-time`,
+  PRICE: `by-price`,
+};
+
+export const ButtonText = {
+  SAVING: `Saving...`,
+  DELETING: `Deleting...`,
+  SAVE: `Save`,
+  DELETE: `Delete`,
+};
+
+export const Method = {
+  GET: `GET`,
+  POST: `POST`,
+  PUT: `PUT`,
+  DELETE: `DELETE`
+};
+
+export const Action = {
+  CREATE: `create`,
+  UPDATE: `update`,
+  DELETE: `delete`,
+};
+
+export const Position = {
+  BEGIN: `afterbegin`,
+  END: `beforeend`,
+  BEFORE: `beforebegin`,
+  AFTER: `afterend`
+};
+
+export const Mode = {
+  DEFAULT: `default`,
+  ADD_NEW: `add-new`,
+};
+
+
 export const createElement = (template) => {
   const newElement = document.createElement(`div`);
   newElement.innerHTML = template;
   return newElement.firstChild;
-
 };
 
 export const capitalizeFirstLetter = (word) => word[0].toUpperCase() + word.slice(1);
 
-export const render = (container, element, postition = `beforeend`) => {
-  switch (postition) {
-    case `afterbegin`:
-      container.prepend(element);
-      break;
-    case `beforeend`:
-      container.append(element);
-      break;
-    case `beforebegin`:
+export const render = (container, element, position = Position.END) => {
+  switch (position) {
+    case Position.BEFORE:
       container.before(element);
       break;
-    case `afterend`:
+    case Position.BEGIN:
+      container.prepend(element);
+      break;
+    case Position.END:
+      container.append(element);
+      break;
+    case Position.AFTER:
       container.after(element);
       break;
   }
