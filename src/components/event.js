@@ -1,7 +1,6 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 import moment from "moment";
-import {getDuration} from './utils';
-import {EventToPretext} from './event-edit';
+import {getDuration, EventToPretext} from './utils';
 
 const AMOUNT_OF_DISPLAYED_OFFERS = 3;
 

@@ -3,24 +3,22 @@ import {EventsList} from './../events-list';
 import {Day} from './../day';
 import {RouteInfo} from './../route-info';
 import {Sort} from './../sort';
-import {DefaultEvent} from './../default-event';
 import {NoPoints} from './../no-points';
-import {PointController, Mode} from "./point-controller";
+import {allDestinations, allOffers} from './../controllers/app-controller';
+import {PointController} from "./point-controller";
 import {SortController} from "./sort-controller";
-import {render, unrender} from './../utils';
+import {render, unrender, RenderSortMode, Mode, Position} from './../utils';
 import moment from "moment";
 
+
 const NO_DATES = `no-dates`;
-export const RenderSortMode = {
-  DEFAULT: `default`,
-  DURATION: `duration-sorted`,
-  PRICE: `price-sorted`,
-};
+
+const infoContainer = document.querySelector(`.trip-main__trip-info`);
+const addNewEventButton = document.querySelector(`.trip-main__event-add-btn`);
 
 export class TripController {
-  constructor(container, infoContainer, onDataChange) {
+  constructor(container, onDataChange) {
     this._container = container;
-    this._infoContainer = infoContainer;
     this._sort = new Sort();
     this._daysList = new DaysList();
     this._eventsList = new EventsList();
@@ -31,34 +29,18 @@ export class TripController {
     this._dayIndex = null;
     this._eventsPerDayMap = null;
     this._areEventsEmpty = false;
+    addNewEventButton.addEventListener(`click`, () => {
+      this._getDefaultEvent();
+    });
   }
 
-  setEvents(events, destinations, offers) {
-    this._destinations = destinations;
+  setEvents(events) {
     this._events = events;
-    this._offers = offers;
+    this._subscriptions = [];
     this._getDataMap();
-    this._renderToProperSort(this._currentSort);
+    this._renderCurrentSorting();
   }
 
-  _renderToProperSort(mode = RenderSortMode.DEFAULT) {
-    switch (mode) {
-      case RenderSortMode.DEFAULT:
-        this.renderTrip();
-        break;
-      case RenderSortMode.DURATION:
-        this._reRenderDayList();
-        this._renderDurationSorted();
-        this._renderHeaderComponents();
-        this._dayIndex = null;
-        break;
-      case RenderSortMode.PRICE:
-        this._reRenderDayList();
-        this._renderPriceSorted();
-        this._renderHeaderComponents();
-        break;
-    }
-  }
   renderTrip() {
     if (!this._areEventsEmpty) {
       unrender(this._noPoints.getElement());
@@ -71,14 +53,13 @@ export class TripController {
     this._dayIndex = null;
     this._areEventsEmpty = false;
   }
-
   renderFilteredFutureEvents() {
     this._reRenderSort();
     this._reRenderDayList();
     this._renderDayContainer();
     this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getFilteredFutureEvents()
-      .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
+      .forEach((event) => this._renderEvent(event, this._day));
     render(this._day, this._eventsList);
   }
 
@@ -88,7 +69,7 @@ export class TripController {
     this._renderDayContainer();
     this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getFilteredFinishedEvents()
-      .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
+      .forEach((event) => this._renderEvent(event, this._day));
     render(this._day, this._eventsList);
   }
 
@@ -104,9 +85,23 @@ export class TripController {
     return this._events;
   }
 
-  renderNewEvent(destinations, allOffers) {
-    let event = DefaultEvent.getDefaultEvent(this._events, destinations, allOffers);
-    this.pointController = new PointController(this._container, event, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW, destinations, this._offers, this._areEventsEmpty);
+  _getDefaultEvent() {
+    const newId = this._events.length;
+    const defaultEvent = {
+      destination: allDestinations[0],
+      offers: allOffers[allOffers.findIndex((offers) => offers.type === `bus`)].offers,
+      startTime: moment().format(),
+      endTime: moment().format(),
+      id: newId,
+      price: `0`,
+      event: `bus`,
+    };
+    this._creatingCard = new PointController(this._container, defaultEvent, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
+    this._onChangeView();
+  }
+
+  _renderEvent(event, container) {
+    this.pointController = new PointController(container, event, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT);
     this._subscriptions.push(this.pointController.setDefaultView.bind(this.pointController));
   }
 
@@ -126,9 +121,9 @@ export class TripController {
       this._eventsList = new EventsList().getElement();
       const dataPoints = this._eventsPerDayMap.get(date);
       if (Array.isArray(dataPoints)) {
-        dataPoints.forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
+        dataPoints.forEach((event) => this._renderEvent(event, this._day));
       } else {
-        this._renderEvent(dataPoints, this._day, this._destinations, this._offers);
+        this._renderEvent(dataPoints, this._day);
       }
       render(this._day, this._eventsList);
     }
@@ -136,7 +131,7 @@ export class TripController {
 
   _renderRouteInfo() {
     this._routeInfo = new RouteInfo(this._eventsPerDayMap);
-    render(this._infoContainer, this._routeInfo.getElement(), `afterbegin`);
+    render(infoContainer, this._routeInfo.getElement(), Position.BEGIN);
   }
 
   _renderDayContainer() {
@@ -151,35 +146,42 @@ export class TripController {
     if (evt.target.tagName !== `INPUT`) {
       return;
     }
-    unrender(this._daysList.getElement());
-    this._daysList.removeElement();
-    switch (evt.target.dataset.sortType) {
-      case `by-event`:
+    this._unRenderDayList();
+    this._renderCurrentSorting(evt.target.dataset.sortType);
+  }
+
+  _renderCurrentSorting(mode = RenderSortMode.DEFAULT) {
+    switch (mode) {
+      case RenderSortMode.DEFAULT:
         this.renderTrip();
         break;
-      case `by-time`:
-        this._currentSort = RenderSortMode.DURATION;
-        this._renderToProperSort(this._currentSort);
+      case RenderSortMode.DURATION:
+        this._reRenderDayList();
+        this._renderDurationSorted();
+        this._renderHeaderComponents();
+        this._dayIndex = null;
         break;
-      case `by-price`:
-        this._currentSort = RenderSortMode.PRICE;
-        this._renderPriceSorted(this._currentSort);
+      case RenderSortMode.PRICE:
+        this._reRenderDayList();
+        this._renderPriceSorted();
+        this._renderHeaderComponents();
         break;
     }
   }
+
   _renderPriceSorted() {
-    this._currentSort = RenderSortMode.PRICE;
     this._renderDayContainer();
     this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getSortedByPriceEvents()
-      .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
+      .forEach((event) => this._renderEvent(event, this._day));
     render(this._day, this._eventsList);
   }
+
   _renderDurationSorted() {
     this._renderDayContainer();
     this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._sortController.getSortedByDurationEvents()
-      .forEach((event) => this._renderEvent(event, this._day, this._destinations, this._offers));
+      .forEach((event) => this._renderEvent(event, this._day));
     render(this._day, this._eventsList);
   }
 
@@ -194,11 +196,6 @@ export class TripController {
 
   _onChangeView() {
     this._subscriptions.forEach((subscription) => subscription());
-  }
-
-  _renderEvent(event, container, destinations, allOffers) {
-    this.pointController = new PointController(container, event, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT, destinations, allOffers);
-    this._subscriptions.push(this.pointController.setDefaultView.bind(this.pointController));
   }
 
   //  -----  Обработка данных в Мапу НАЧАЛОСЬ -----
@@ -222,16 +219,12 @@ export class TripController {
   _getMapFilledProperValues(key) {
     const properEvents = [];
     this._events.forEach((event) => {
-      // if (this._getDate(key) === this._getDate(event.startTime)) {
       if (new Date(key).getDate() === new Date(event.startTime).getDate()) {
         properEvents.push(event);
       }
     });
     return properEvents;
   }
-  // _getDate(ms) {
-  //   return new Date(ms).getDate();
-  // }
   //  ----  Обработка данных в Мапу ЗАКОНЧИЛОСЬ -----
 
   _renderSort() {

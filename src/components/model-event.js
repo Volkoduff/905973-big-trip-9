@@ -18,7 +18,6 @@ export class ModelEvent {
 
   static parseEvents(data) {
     return data.map(ModelEvent.parseEvent);
-    // return new ModelEvent(data[19]);
   }
 
   static parseOffers(data) {

@@ -1,4 +1,4 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 
 export class NoPoints extends AbstractComponent {
   getTemplate() {

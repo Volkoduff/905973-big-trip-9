@@ -1,11 +1,5 @@
 import {ModelEvent} from './model-event';
-
-const Method = {
-  GET: `GET`,
-  POST: `POST`,
-  PUT: `PUT`,
-  DELETE: `DELETE`
-};
+import {Method} from './utils';
 
 const checkStatus = (response) => {
   if (response.status >= 200 && response.status < 300) {
@@ -75,8 +69,6 @@ export const API = class {
     return fetch(`${this._endPoint}/${url}`, {method, body, headers})
       .then(checkStatus)
       .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error(`fetch error: ${err}`);
         throw err;
       });
   }

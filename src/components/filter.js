@@ -1,4 +1,4 @@
-import {AbstractComponent} from './abstract-conponent';
+import {AbstractComponent} from './abstract-component';
 const FILTER_NAMES = [`everything`, `future`, `past`];
 
 export class Filter extends AbstractComponent {
