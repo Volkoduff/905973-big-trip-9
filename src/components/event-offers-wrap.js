@@ -1,6 +1,6 @@
-import {AbstractComponent} from './abstract-conponent';
+import AbstractComponent from './abstract-component';
 
-export class EventOffersWrap extends AbstractComponent {
+export default class EventOffersWrap extends AbstractComponent {
   constructor() {
     super();
   }

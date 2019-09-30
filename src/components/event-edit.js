@@ -1,33 +1,17 @@
-import {AbstractComponent} from './abstract-conponent';
-import {EventIcon} from './event-icon';
-import {EventPlaceholder} from './event-placeholder';
-import {EventOffers} from './event-offers';
-import {DestinationDescription} from './destination-description';
-import {render, unrender, capitalizeFirstLetter} from './utils';
+import {render, unrender, capitalizeFirstLetter, TRANSFER_EVENTS, ACTIVITY_EVENTS, EventToPretext, Position} from './utils';
+import {allDestinations, allOffers} from './controllers/app-controller';
+import AbstractComponent from './abstract-component';
+import EventIcon from './event-icon';
+import EventPlaceholder from './event-placeholder';
+import EventOffers from './event-offers';
+import DestinationDescription from './destination-description';
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/light.css";
 import moment from "moment";
 
-const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
-const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
-
-export const EventToPretext = {
-  'bus': `Bus to`,
-  'check-in': `Check-in in`,
-  'drive': `Drive to`,
-  'flight': `Flight to`,
-  'restaurant': `Restaurant in`,
-  'ship': `Ship to`,
-  'sightseeing': `Sightseeing in`,
-  'taxi': `Taxi to`,
-  'train': `Train to`,
-  'transport': `Transport to`,
-  'trip': `Trip to`,
-};
-
-export class EventEdit extends AbstractComponent {
-  constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, container, destinations, allOffers) {
+export default class EventEdit extends AbstractComponent {
+  constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, sort) {
     super();
     this._event = event;
     this._destination = destination;
@@ -35,9 +19,8 @@ export class EventEdit extends AbstractComponent {
     this._startTime = startTime;
     this._endTime = endTime;
     this._price = price;
+    this._sort = sort;
     this._id = id;
-    this._allOffers = allOffers;
-    this._destinations = destinations;
     this._isFavorite = isFavorite;
     this._isEventCreating = false;
     this.init();
@@ -50,9 +33,8 @@ export class EventEdit extends AbstractComponent {
       defaultDate: this._event.dueDate,
       enableTime: true,
       minuteIncrement: 1,
-      dateFormat: `d.m.Y H:i`, // Формат входящей даты
-      // eslint-disable-next-line camelcase
-      time_24hr: true,
+      dateFormat: `d.m.Y H:i`,
+      [`time_24hr`]: true,
       onChange(selectedDates, dateStr) {
         endFlatpickr.set(`minDate`, dateStr);
       },
@@ -64,68 +46,114 @@ export class EventEdit extends AbstractComponent {
       defaultDate: this._event.dueDate,
       enableTime: true,
       minuteIncrement: 1,
-      dateFormat: `d.m.Y H:i`, // Формат входящей даты
-      // eslint-disable-next-line camelcase
-      time_24hr: true,
+      dateFormat: `d.m.Y H:i`,
+      [`time_24hr`]: true,
       onChange(selectedDates, dateStr) {
         startFlatpickr.set(`maxDate`, dateStr);
       },
     });
+    this._inputNumbersOnly();
   }
 
-  onClickRenderEvent() {
-    this._isEventCreating = true;
-    if (!this.newForm) {
-      this._createNewEventForm();
-    } else {
-      EventEdit.show(this.newForm);
-    }
-    this._disableAddNewButton();
-  }
-
-  _disableAddNewButton() {
-    const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
-    addNewButton.disabled = true;
-  }
-  _unDisableAddNewButton() {
-    const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
-    addNewButton.disabled = false;
-  }
-  _createNewEventForm() {
-    this._container = document.querySelector(`.trip-events__trip-sort`);
-    this.newForm = this.getElement().querySelector(`form`);
-    this._displayAsNewEvent();
-    this.newForm.classList.add(`trip-events__item`);
-    render(this._container, this.newForm, `afterend`);
-  }
-
-  _transformDeleteButton() {
-    const deleteButton = this.getElement().querySelector(`.event__reset-btn`);
-    deleteButton.textContent = `Cancel`;
-    deleteButton.addEventListener(`click`, (evt) => this.cancelNewEvent(evt));
-  }
-
-  onClickChangeEventType(evt, mode) {
-    this._getProperContext(mode);
+  onClickChangeEventType(evt) {
+    this._getProperContext();
     this._setNewValueToForm(evt);
     this._renderIcon();
     this._renderPlaceholder();
     this._renderOffers();
   }
 
-  onchangeDestination(evt, mode) {
-    this._getProperContext(mode);
-    this._destination = this._destinations
+  onchangeDestination(evt) {
+    this._getProperContext();
+    this._destination = allDestinations
       .filter((destination) => destination.name === evt.target.value)[0];
     this._renderDescription();
   }
 
-  cancelNewEvent(evt) {
-    evt.preventDefault();
+  changeSaveButtonText(text) {
+    this._getCurrentForm().querySelector(`.event__save-btn`)
+      .textContent = text;
+  }
+  onClickRenderEvent() {
+    let container = this._sort.getElement();
+    this._isEventCreating = true;
+    const noPointsElement = document.querySelector(`.trip-events__msg`);
+    if (noPointsElement) {
+      container = document.querySelector(`.trip-events`);
+      unrender(noPointsElement);
+    }
+
+    this._createNewEventForm(container);
+    EventEdit._disableAddNewButton(true);
+  }
+
+  changeDeleteButtonText(text) {
+    this.getElement().querySelector(`.event__reset-btn`)
+      .textContent = text;
+  }
+
+  _createNewEventForm(container) {
+
+    this.newForm = this.getElement().querySelector(`form`);
+    this.newForm.classList.add(`trip-events__item`);
+    this._displayAsNewEvent();
+    render(container, this.newForm, Position.AFTER);
+  }
+
+  lock() {
+    this._shakeRemove();
+    EventEdit._blockSaveButton(true);
+    this._allInputsBlock(true);
+  }
+
+  unLock() {
+    this._shakeRemove();
+    EventEdit._blockSaveButton(false);
+    this._allInputsBlock(false);
+  }
+  shake() {
+    this._getCurrentForm().classList.add(`shake`);
+  }
+
+  _shakeRemove() {
+    this._getCurrentForm().classList.remove(`shake`);
+  }
+  _getCurrentForm() {
+    let currentForm = this.getElement().querySelector(`form`);
+    if (this._isEventCreating) {
+      currentForm = this.newForm;
+    }
+    return currentForm;
+  }
+
+  _allInputsBlock(flag) {
+    [...this._getCurrentForm().querySelectorAll(`input`)]
+      .forEach((input) => {
+        input.disabled = flag;
+      });
+  }
+
+  static _blockSaveButton(flag) {
+    const saveButton = document.querySelector(`.event__save-btn`);
+    saveButton.disabled = flag;
+  }
+
+  static _disableAddNewButton(flag) {
+    const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
+    addNewButton.disabled = flag;
+  }
+
+  _transformDeleteButton() {
+    const deleteButton = this.getElement().querySelector(`.event__reset-btn`);
+    deleteButton.textContent = `Cancel`;
+    deleteButton.addEventListener(`click`, (evt) => this.stopCreatingNewEvent(evt));
+  }
+
+  stopCreatingNewEvent() {
     this._isEventCreating = false;
     this._hideNewEventDetails();
-    EventEdit.hide(this.newForm);
-    this._unDisableAddNewButton();
+    unrender(this.newForm);
+    EventEdit._disableAddNewButton(false);
   }
 
   _hideNewEventDetails() {
@@ -136,25 +164,16 @@ export class EventEdit extends AbstractComponent {
   }
 
   _displayAsNewEvent() {
-    const toggleButton = this.getElement().querySelector(`.event__rollup-btn`);
-    if (toggleButton !== null) {
-      unrender(toggleButton);
-      this._transformDeleteButton();
-      const favoriteButton = this.getElement().querySelector(`.event__favorite-btn`);
-      favoriteButton.classList.add(`visually-hidden`);
-      this._hideNewEventDetails();
-    }
+    this._transformDeleteButton();
+    this._hideNewEventDetails();
   }
 
   static show(element) {
     element.classList.remove(`visually-hidden`);
   }
-  static hide(element) {
-    element.classList.add(`visually-hidden`);
-  }
 
-  _getProperContext(mode) {
-    if (mode === `add-new`) {
+  _getProperContext() {
+    if (this._isEventCreating) {
       this._form = this.newForm;
     } else {
       this._form = this.getElement();
@@ -183,15 +202,15 @@ export class EventEdit extends AbstractComponent {
     unrender(offersWrap);
     const detailsSection = this._form.querySelector(`.event__details`);
     if (this._event !== `transport` && this._event !== `sightseeing`) {
-      const offers = new EventOffers(this._event, this._allOffers, this._id);
-      render(detailsSection, offers.getElement(), `afterbegin`);
+      const offers = new EventOffers(this._event, allOffers, this._id);
+      render(detailsSection, offers.getElement(), Position.BEGIN);
     }
   }
   _renderPlaceholder() {
     const placeholderWrap = this._form.querySelector(`.event__field-group`);
     unrender(placeholderWrap.querySelector(`.event__label`));
     const eventPlaceholder = new EventPlaceholder(this._event, this._id);
-    render(placeholderWrap, eventPlaceholder.getElement(), `afterbegin`);
+    render(placeholderWrap, eventPlaceholder.getElement(), Position.BEGIN);
   }
   _renderDescription() {
     const detailsSection = this._form.querySelector(`.event__details`);
@@ -199,6 +218,12 @@ export class EventEdit extends AbstractComponent {
     unrender(descriptionSection);
     const description = new DestinationDescription(this._destination);
     render(detailsSection, description.getElement());
+  }
+
+  _inputNumbersOnly() {
+    this._getCurrentForm().querySelector(`.event__input--price`).addEventListener(`input`, (evt) => {
+      evt.target.value = evt.target.value.replace(/[^\d]/g, ``);
+    });
   }
 
   getTemplate() {
@@ -237,9 +262,9 @@ export class EventEdit extends AbstractComponent {
           <input class="event__input  event__input--destination" id="event-destination-${this._id}"
            type="text" name="event-destination"
            list="destination-list-${this._id}"
-           value="${this._destination.name}">
+           value="${this._destination.name !== undefined ? this._destination.name : ``}">
           <datalist id="destination-list-${this._id}">
-          ${this._destinations.map((destination) => `<option value="${destination.name}"></option>`).join(``)}
+          ${allDestinations.map((destination) => `<option value="${destination.name}"></option>`).join(``)}
           </datalist>
         </div>
 
@@ -268,7 +293,7 @@ export class EventEdit extends AbstractComponent {
             <span class="visually-hidden">Price</span>
             €
           </label>
-          <input class="event__input  event__input--price" id="event-price-${this._id}" type="number" name="event-price" value="${this._price}">
+          <input class="event__input  event__input--price" id="event-price-${this._id}" name="event-price" value="${this._price}">
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -303,7 +328,7 @@ ${this._offers
   </label>
   </div>`).join(``)}
         </section>` : ``}
-          <section class="event__section  event__section--destination">
+          ${this._destination.description !== undefined ? `<section class="event__section  event__section--destination">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
           <p class="event__destination-description">${this._destination.description}</p>
           <div class="event__photos-container">
@@ -312,7 +337,8 @@ ${this._offers
             
             </div>
           </div>
-        </section>
+        </section>` : ``}
+          
           
       </section>
     </form>

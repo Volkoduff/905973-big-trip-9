@@ -1,6 +1,6 @@
-import {AbstractComponent} from './abstract-conponent';
+import AbstractComponent from './abstract-component';
 
-export class EventIcon extends AbstractComponent {
+export default class EventIcon extends AbstractComponent {
   constructor(event) {
     super();
     this._event = event;

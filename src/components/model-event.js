@@ -1,7 +1,7 @@
 import moment from "moment";
 
-export class ModelEvent {
-  constructor(data) {
+export default class ModelEvent {
+  constructor(data = {}) {
     this.id = data[`id`];
     this.price = data[`base_price`];
     this.startTime = new Date(data[`date_from`]);
@@ -18,7 +18,6 @@ export class ModelEvent {
 
   static parseEvents(data) {
     return data.map(ModelEvent.parseEvent);
-    // return new ModelEvent(data[19]);
   }
 
   static parseOffers(data) {

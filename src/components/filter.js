@@ -1,7 +1,7 @@
-import {AbstractComponent} from './abstract-conponent';
+import AbstractComponent from './abstract-component';
 const FILTER_NAMES = [`everything`, `future`, `past`];
 
-export class Filter extends AbstractComponent {
+export default class Filter extends AbstractComponent {
   getTemplate() {
     return `<form class="trip-filters" action="#" method="get">
 ${FILTER_NAMES.map((name) => `<div class="trip-filters__filter">

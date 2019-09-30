@@ -1,11 +1,10 @@
-import {AbstractComponent} from './abstract-conponent';
+import {getDuration, EventToPretext} from './utils';
+import AbstractComponent from './abstract-component';
 import moment from "moment";
-import {getDuration} from './utils';
-import {EventToPretext} from './event-edit';
 
 const AMOUNT_OF_DISPLAYED_OFFERS = 3;
 
-export class Event extends AbstractComponent {
+export default class Event extends AbstractComponent {
   constructor({event, startTime, endTime, price, offers, destination}) {
     super();
     this._event = event;

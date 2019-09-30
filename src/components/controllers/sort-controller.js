@@ -1,6 +1,6 @@
 import moment from "moment";
 
-export class SortController {
+export default class SortController {
   constructor(sort, eventsPerDayMap) {
     this._sort = sort;
     this._eventsPerDayMap = eventsPerDayMap;
@@ -36,16 +36,12 @@ export class SortController {
   }
 
   getFilteredFutureEvents() {
-    this._currentDate = moment().format(`DD`);
     return this._getEventsFromMap(this._eventsPerDayMap)
-      .filter((el) => el.startTime > moment().format(`x`))
-      .filter((el) => moment(el.startTime).format(`DD`) > this._currentDate);
-  }
-  getFilteredFinishedEvents() {
-    this._currentDate = moment().format(`DD`);
-    return this._getEventsFromMap(this._eventsPerDayMap)
-      .filter((el) => el.startTime < moment().format(`x`))
-      .filter((el) => moment(el.endTime).format(`DD`) < this._currentDate);
+      .filter((el) => moment(el.startTime).isAfter(moment(), `day`));
   }
 
+  getFilteredFinishedEvents() {
+    return this._getEventsFromMap(this._eventsPerDayMap)
+      .filter((el) => moment(el.endTime).isBefore(moment(), `day`));
+  }
 }

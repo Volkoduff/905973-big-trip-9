@@ -1,6 +1,6 @@
 import {createElement} from './utils';
 
-export class AbstractComponent {
+export default class AbstractComponent {
   constructor() {
     this._element = null;
     if (new.target === AbstractComponent) {

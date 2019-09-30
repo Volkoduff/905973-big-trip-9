@@ -1,7 +1,7 @@
-import {AbstractComponent} from './abstract-conponent';
-import {EventToPretext} from './event-edit';
+import {EventToPretext} from './utils';
+import AbstractComponent from './abstract-component';
 
-export class EventPlaceholder extends AbstractComponent {
+export default class EventPlaceholder extends AbstractComponent {
   constructor(event, index) {
     super();
     this._event = event;
