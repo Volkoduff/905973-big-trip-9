@@ -1,8 +1,8 @@
 import moment from "moment";
 
 export const TRANSFER_EVENTS = [`bus`, `drive`, `flight`, `ship`, `taxi`, `train`, `transport`];
-
 export const ACTIVITY_EVENTS = [`check-in`, `restaurant`, `sightseeing`];
+
 export const EventToPretext = {
   'bus': `Bus to`,
   'check-in': `Check-in in`,
@@ -15,6 +15,17 @@ export const EventToPretext = {
   'train': `Train to`,
   'transport': `Transport to`,
   'trip': `Trip to`,
+};
+
+export const FilterName = {
+  EVERYTHING: `everything`,
+  FUTURE: `future`,
+  PAST: `past`,
+};
+
+export const MenuTab = {
+  EVENT_POINTS_TABLE: `Table`,
+  STATISTICS: `Stats`
 };
 
 export const RenderSortMode = {
@@ -44,17 +55,16 @@ export const Action = {
 };
 
 export const Position = {
-  BEGIN: `afterbegin`,
-  END: `beforeend`,
-  BEFORE: `beforebegin`,
-  AFTER: `afterend`
+  BEGIN: `afterBegin`,
+  END: `beforeEnd`,
+  BEFORE: `beforeBegin`,
+  AFTER: `afterEnd`,
 };
 
 export const Mode = {
   DEFAULT: `default`,
   ADD_NEW: `add-new`,
 };
-
 
 export const createElement = (template) => {
   const newElement = document.createElement(`div`);

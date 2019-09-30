@@ -1,22 +1,11 @@
-import {TripController} from './../controllers/trip-controller';
-import {AbstractComponent} from '../abstract-component';
-import {Statistics} from './../stats';
-import {NavigationMenu} from './../navigation-menu';
-import {Filter} from './../filter';
-import {render, Action, ButtonText, Position} from './../utils';
-import {API} from "../api";
-import {ModelEvent} from "../model-event";
-
-const FilterName = {
-  EVERYTHING: `everything`,
-  FUTURE: `future`,
-  PAST: `past`,
-};
-
-const MenuTab = {
-  EVENT_POINTS_TABLE: `Table`,
-  STATISTICS: `Stats`
-};
+import {render, Action, ButtonText, Position, FilterName, MenuTab} from './../utils';
+import TripController from './../controllers/trip-controller';
+import AbstractComponent from '../abstract-component';
+import Statistics from './../stats';
+import NavigationMenu from './../navigation-menu';
+import Filter from './../filter';
+import API from "../api";
+import ModelEvent from "../model-event";
 
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://htmlacademy-es-9.appspot.com/big-trip`;
@@ -28,54 +17,31 @@ const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 let allDestinations;
 let allOffers;
 
-export class AppController extends AbstractComponent {
+export default class AppController extends AbstractComponent {
   constructor() {
     super();
-    this._onDataChange = this._onDataChange.bind(this);
+    this.onDataChange = this.onDataChange.bind(this);
   }
 
   init() {
-    this.tripController = new TripController(tripEventsContainer, this._onDataChange);
+    this.tripController = new TripController(tripEventsContainer, this.onDataChange);
+    this.tripController.renderLoadingPlug();
     api.getDestinations()
       .then((destinations) => {
         allDestinations = destinations;
-      });
-    api.getOffers()
-      .then((offers) => {
-        allOffers = offers;
-      });
-    api.getEvents()
-      .then((events) => this.tripController.setEvents(events));
-
-    this._renderNavigation();
-    this._renderFilters();
-    this._renderStatistics();
+      })
+      .then(() => api.getOffers()
+        .then((offers) => {
+          allOffers = offers;
+        }))
+      .then(() => api.getEvents()
+        .then((events) => this.tripController.setEvents(events))
+        .then(() => this.tripController.unRenderLoadingPlug())
+        .then(() => this._renderTrip()));
   }
 
-  _renderStatistics() {
-    this._statistics = new Statistics();
-    render(tripEventsContainer, this._statistics.getElement(), Position.AFTER);
-    this._statistics.hide();
-  }
-
-  _renderFilters() {
-    this._filter = new Filter();
-    const filterElements = this._filter.getElement().querySelectorAll(`.trip-filters__filter`);
-    filterElements.forEach((filterElement) => filterElement.addEventListener(`click`, (evt) => this._onClickFilterSwitch(evt)));
+  onDataChange(actionType, events, element) {
     this._setDefaultFilterActive();
-    render(controlsContainer, this._filter.getElement());
-  }
-  _setDefaultFilterActive() {
-    this._filter.getElement().querySelector(`#filter-everything`).checked = true;
-  }
-  _renderNavigation() {
-    this._navigationMenu = new NavigationMenu();
-    [...this._navigationMenu.getElement().children]
-      .forEach((tripTab) => tripTab.addEventListener(`click`, (evt) => this._onClickMenuSwitch(evt)));
-    render(controlsContainer, this._navigationMenu.getElement());
-  }
-
-  _onDataChange(actionType, events, element) {
     switch (actionType) {
       case Action.UPDATE:
         element.lock();
@@ -120,6 +86,37 @@ export class AppController extends AbstractComponent {
     }
   }
 
+  _renderTrip() {
+    this._renderNavigation();
+    this._renderFilters();
+    this._renderStatistics();
+  }
+
+  _renderStatistics() {
+    this._statistics = new Statistics();
+    render(tripEventsContainer, this._statistics.getElement(), Position.AFTER);
+    this._statistics.hide();
+  }
+
+  _renderFilters() {
+    this._filter = new Filter();
+    const filterElements = this._filter.getElement().querySelectorAll(`.trip-filters__filter`);
+    filterElements.forEach((filterElement) => filterElement.addEventListener(`click`, (evt) => this._onClickFilterSwitch(evt)));
+    this._setDefaultFilterActive();
+    render(controlsContainer, this._filter.getElement());
+  }
+
+  _setDefaultFilterActive() {
+    this._filter.getElement().querySelector(`#filter-everything`).checked = true;
+  }
+
+  _renderNavigation() {
+    this._navigationMenu = new NavigationMenu();
+    [...this._navigationMenu.getElement().children]
+      .forEach((tripTab) => tripTab.addEventListener(`click`, (evt) => this._onClickMenuSwitch(evt)));
+    render(controlsContainer, this._navigationMenu.getElement());
+  }
+
   _onClickMenuSwitch(evt) {
     if (evt.target.tagName !== `A` && evt.target.tagName !== `Button`) {
       return;
@@ -157,10 +154,10 @@ export class AppController extends AbstractComponent {
         this.tripController.renderTrip();
         break;
       case FilterName.FUTURE:
-        this.tripController.renderFilteredFutureEvents();
+        this.tripController.renderFilteredEvents(FilterName.FUTURE);
         break;
       case FilterName.PAST:
-        this.tripController.renderFilteredPastEvents();
+        this.tripController.renderFilteredEvents(FilterName.PAST);
         break;
     }
   }

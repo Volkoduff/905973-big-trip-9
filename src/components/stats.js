@@ -1,9 +1,9 @@
-import {AbstractComponent} from './abstract-component';
 import {getHumanFriendlyTime} from './utils';
+import AbstractComponent from './abstract-component';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-export class Statistics extends AbstractComponent {
+export default class Statistics extends AbstractComponent {
   constructor() {
     super();
     this._isReapeated = false;
@@ -12,7 +12,6 @@ export class Statistics extends AbstractComponent {
   createCharts(events) {
     this.events = events;
     this._getDueDates();
-
     this._createMoneyChart();
     this._createTransportChart();
     this._createDurationChart();
@@ -77,19 +76,19 @@ export class Statistics extends AbstractComponent {
     }
   }
 
-  _getEventLabels(labelsPerSum) {
+  static _getEventLabels(labelsPerSum) {
     return labelsPerSum.map((el) => el.type.toUpperCase());
   }
 
-  _getEventSums(labelsPerSum) {
+  static _getEventSums(labelsPerSum) {
     return labelsPerSum.map((el) => el.sum);
   }
 
-  _getEventIterations(labelsPerSum) {
+  static _getEventIterations(labelsPerSum) {
     return labelsPerSum.map((el) => el.count);
   }
 
-  _getSpentTime(labelsPerSum) {
+  static _getSpentTime(labelsPerSum) {
     return labelsPerSum.map((el) => el.durationSum);
   }
 
@@ -103,9 +102,9 @@ export class Statistics extends AbstractComponent {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {
-        labels: this._getEventLabels(this.eventMoneySums),
+        labels: Statistics._getEventLabels(this.eventMoneySums),
         datasets: [{
-          data: this._getEventSums(this.eventMoneySums),
+          data: Statistics._getEventSums(this.eventMoneySums),
           backgroundColor: `#ffd054`,
           borderWidth: 1,
           borderColor: `#424242`,
@@ -187,9 +186,9 @@ export class Statistics extends AbstractComponent {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {
-        labels: this._getEventLabels(this.eventMoneySums),
+        labels: Statistics._getEventLabels(this.eventMoneySums),
         datasets: [{
-          data: this._getEventIterations(this.eventMoneySums),
+          data: Statistics._getEventIterations(this.eventMoneySums),
           backgroundColor: `#ffd054`,
           borderWidth: 1,
           borderColor: `#424242`,
@@ -269,9 +268,9 @@ export class Statistics extends AbstractComponent {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {
-        labels: this._getEventLabels(this.eventMoneySums),
+        labels: Statistics._getEventLabels(this.eventMoneySums),
         datasets: [{
-          data: this._getSpentTime(this.eventMoneySums),
+          data: Statistics._getSpentTime(this.eventMoneySums),
           backgroundColor: `#ffd054`,
           borderWidth: 1,
           borderColor: `#424242`,

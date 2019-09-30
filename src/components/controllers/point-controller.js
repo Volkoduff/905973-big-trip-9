@@ -1,22 +1,23 @@
-import {Event} from './../event';
-import {EventEdit} from './../event-edit';
 import {render, unrender, Action, Mode} from './../utils';
 import {allOffers} from './app-controller';
+import Event from './../event';
+import EventEdit from './../event-edit';
 import moment from "moment";
 
 const KeyCode = {
   ESCAPE: `Escape`,
   ESC: `ESC`,
+  BACKSPACE: `Backspace`,
 };
 
-export class PointController {
+export default class PointController {
   constructor(container, data, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode) {
     this._container = container;
     this._data = data;
     this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
     this._event = new Event(data);
-    this._eventEdit = new EventEdit(data);
+    this._eventEdit = new EventEdit(data, sort);
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
 
@@ -116,7 +117,7 @@ export class PointController {
       .forEach((el) => el.addEventListener(`click`, (evt) => this._eventEdit.onClickChangeEventType(evt, mode)));
 
     destinationInput.addEventListener(`keydown`, (evt) => {
-      if (evt.key !== `Backspace` && evt.key !== `Escape`) {
+      if (evt.key !== KeyCode.BACKSPACE && evt.key !== KeyCode.ESCAPE) {
         evt.preventDefault();
       }
     });
@@ -127,7 +128,6 @@ export class PointController {
       this._eventEdit.onClickRenderEvent();
     }
   }
-
 
   setDefaultView() {
     if (this._container.contains(this._eventEdit.getElement())) {

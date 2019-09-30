@@ -1,6 +1,6 @@
-import {AbstractComponent} from './abstract-component';
+import AbstractComponent from './abstract-component';
 
-export class Day extends AbstractComponent {
+export default class Day extends AbstractComponent {
   constructor(date, day) {
     super();
     this._date = date;

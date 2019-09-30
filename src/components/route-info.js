@@ -1,6 +1,6 @@
-import {AbstractComponent} from './abstract-component';
+import AbstractComponent from './abstract-component';
 
-export class RouteInfo extends AbstractComponent {
+export default class RouteInfo extends AbstractComponent {
   constructor(dataArray) {
     super();
     this._dataArray = dataArray;
@@ -41,7 +41,7 @@ export class RouteInfo extends AbstractComponent {
     for (let events of this._dataArray.values()) {
       if (events.length > 1) {
         events.forEach((event) => this._destinations.push(event.destination.name));
-      } else {
+      } else if (events.length) {
         this._destinations.push(events[0].destination.name);
       }
     }

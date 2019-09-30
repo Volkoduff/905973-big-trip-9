@@ -1,7 +1,7 @@
-import {AbstractComponent} from './abstract-component';
 import {allOffers} from './controllers/app-controller';
+import AbstractComponent from './abstract-component';
 
-export class EventOffers extends AbstractComponent {
+export default class EventOffers extends AbstractComponent {
   constructor(event, index) {
     super();
     this._event = event;

@@ -1,4 +1,4 @@
-import {ModelEvent} from './model-event';
+import ModelEvent from './model-event';
 import {Method} from './utils';
 
 const checkStatus = (response) => {
@@ -13,7 +13,7 @@ const toJSON = (response) => {
   return response.json();
 };
 
-export const API = class {
+export default class API {
   constructor({endPoint, authorization}) {
     this._endPoint = endPoint;
     this._authorization = authorization;
@@ -72,4 +72,4 @@ export const API = class {
         throw err;
       });
   }
-};
+}
