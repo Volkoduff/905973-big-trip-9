@@ -29,16 +29,19 @@ export default class AppController extends AbstractComponent {
     api.getDestinations()
       .then((destinations) => {
         allDestinations = destinations;
-      });
-    api.getOffers()
-      .then((offers) => {
-        allOffers = offers;
-      });
-    api.getEvents()
-      .then((events) => this.tripController.setEvents(events))
-      .then(() => this._renderTrip());
+      })
+      .then(() => api.getOffers()
+        .then((offers) => {
+          allOffers = offers;
+        }))
+      .then(() => api.getEvents()
+        .then((events) => this.tripController.setEvents(events))
+        .then(() => this.tripController.unRenderLoadingPlug())
+        .then(() => this._renderTrip()));
   }
+
   onDataChange(actionType, events, element) {
+    this._setDefaultFilterActive();
     switch (actionType) {
       case Action.UPDATE:
         element.lock();
@@ -84,7 +87,6 @@ export default class AppController extends AbstractComponent {
   }
 
   _renderTrip() {
-    this.tripController.unRenderLoadingPlug();
     this._renderNavigation();
     this._renderFilters();
     this._renderStatistics();
@@ -152,10 +154,10 @@ export default class AppController extends AbstractComponent {
         this.tripController.renderTrip();
         break;
       case FilterName.FUTURE:
-        this.tripController.renderFilteredFutureEvents();
+        this.tripController.renderFilteredEvents(FilterName.FUTURE);
         break;
       case FilterName.PAST:
-        this.tripController.renderFilteredPastEvents();
+        this.tripController.renderFilteredEvents(FilterName.PAST);
         break;
     }
   }

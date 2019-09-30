@@ -34,8 +34,7 @@ export default class EventEdit extends AbstractComponent {
       enableTime: true,
       minuteIncrement: 1,
       dateFormat: `d.m.Y H:i`,
-      // eslint-disable-next-line camelcase
-      time_24hr: true,
+      [`time_24hr`]: true,
       onChange(selectedDates, dateStr) {
         endFlatpickr.set(`minDate`, dateStr);
       },
@@ -48,8 +47,7 @@ export default class EventEdit extends AbstractComponent {
       enableTime: true,
       minuteIncrement: 1,
       dateFormat: `d.m.Y H:i`,
-      // eslint-disable-next-line camelcase
-      time_24hr: true,
+      [`time_24hr`]: true,
       onChange(selectedDates, dateStr) {
         startFlatpickr.set(`maxDate`, dateStr);
       },

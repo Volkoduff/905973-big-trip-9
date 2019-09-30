@@ -1,4 +1,4 @@
-import {render, unrender, RenderSortMode, Mode, Position} from './../utils';
+import {render, unrender, RenderSortMode, Mode, Position, FilterName} from './../utils';
 import {allOffers} from './../controllers/app-controller';
 import DaysList from './../days-list';
 import EventsList from './../events-list';
@@ -52,23 +52,21 @@ export default class TripController {
     this._areEventsEmpty = false;
   }
 
-  renderFilteredFutureEvents() {
+  renderFilteredEvents(filterType) {
+    let filteredEvents;
+    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
     this._reRenderSort();
     this._reRenderDayList();
     this._renderDayContainer();
-    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
-    this._sortController.getFilteredFutureEvents()
-      .forEach((event) => this._renderEvent(event, this._day));
-    render(this._day, this._eventsList);
-  }
-
-  renderFilteredPastEvents() {
-    this._reRenderSort();
-    this._reRenderDayList();
-    this._renderDayContainer();
-    this._sortController = new SortController(this._sort, this._eventsPerDayMap);
-    this._sortController.getFilteredFinishedEvents()
-      .forEach((event) => this._renderEvent(event, this._day));
+    switch (filterType) {
+      case FilterName.FUTURE:
+        filteredEvents = this._sortController.getFilteredFutureEvents();
+        break;
+      case FilterName.PAST:
+        filteredEvents = this._sortController.getFilteredFinishedEvents();
+        break;
+    }
+    filteredEvents.forEach((event) => this._renderEvent(event, this._day));
     render(this._day, this._eventsList);
   }
 

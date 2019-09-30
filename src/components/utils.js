@@ -55,10 +55,10 @@ export const Action = {
 };
 
 export const Position = {
-  BEGIN: `afterbegin`,
-  END: `beforeend`,
-  BEFORE: `beforebegin`,
-  AFTER: `afterend`
+  BEGIN: `afterBegin`,
+  END: `beforeEnd`,
+  BEFORE: `beforeBegin`,
+  AFTER: `afterEnd`,
 };
 
 export const Mode = {
