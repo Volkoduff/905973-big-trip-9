@@ -1,5 +1,4 @@
 import {render, unrender, Action, Mode} from './../utils';
-import {allOffers} from './app-controller';
 import Event from './../event';
 import EventEdit from './../event-edit';
 import moment from "moment";
@@ -11,25 +10,22 @@ const KeyCode = {
 };
 
 export default class PointController {
-  constructor(container, data, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode) {
+  constructor(container, data, onDataChange, onChangeView, eventsList, sort, onDeleteCheck, mode, models) {
     this._container = container;
     this._data = data;
     this._onDeleteCheck = onDeleteCheck;
     this._eventsList = eventsList;
     this._event = new Event(data);
-    this._eventEdit = new EventEdit(data, sort);
+    this._eventEdit = new EventEdit(data, sort, models);
     this._onChangeView = onChangeView;
     this._onDataChange = onDataChange;
-
+    this._models = models;
     this.init(mode);
   }
 
   init(mode) {
     let currentView = this._event;
     if (mode === Mode.ADD_NEW) {
-      this._eventEdit.getElement().classList.add(`trip-events__item`);
-      this._eventEdit.getElement().querySelector(`.event__favorite-btn`).remove();
-      this._eventEdit.getElement().querySelector(`.event__rollup-btn`).remove();
       currentView = this._eventEdit;
     }
     this._eventEdit.getElement().querySelector(`.event__input`)
@@ -53,7 +49,7 @@ export default class PointController {
       this._data.endTime = +moment(formData.get(`event-end-time`), `DD.MM.YYYY HH:mm`).format(`x`);
       this._data.price = +formData.get(`event-price`);
       this._data.isFavorite = formData.get(`event-favorite`) !== null;
-      this._data.offers = allOffers[allOffers.findIndex((it) => it.type === formData.get(`event-type`))].offers;
+      this._data.offers = this._models.offers[this._models.offers.findIndex((it) => it.type === formData.get(`event-type`))].offers;
       this._data.offers.forEach((el, it) => {
         el.accepted = PointController._getOffersInputFlag(evt)[it];
       });
@@ -61,20 +57,6 @@ export default class PointController {
       this._onDataChange(mode === Mode.DEFAULT ? Action.UPDATE : Action.CREATE, this._data, this._eventEdit);
       removeEventListener(`keydown`, onEscKeyDown);
     };
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === KeyCode.ESCAPE || evt.key === KeyCode.ESC) {
-        if (mode === Mode.DEFAULT) {
-          this._onChangeView();
-          removeEventListener(`keydown`, onEscKeyDown);
-        } else if (mode === Mode.ADDING) {
-          unrender(currentView.getElement());
-          currentView.removeElement();
-        }
-        document.removeEventListener(`keydown`, onEscKeyDown);
-      }
-    };
-
     this._eventEdit.getElement().querySelector(`.event__input`)
       .addEventListener(`blur`, () => {
         addEventListener(`keydown`, onEscKeyDown);
@@ -104,7 +86,6 @@ export default class PointController {
           this._onChangeView();
           removeEventListener(`keydown`, onEscKeyDown);
         });
-
     } else if (mode === Mode.ADD_NEW) {
       currentView.getElement().querySelector(`.event--edit`)
         .addEventListener(`submit`, onSubmitDataChange);
@@ -127,6 +108,19 @@ export default class PointController {
     } else if (mode === Mode.ADD_NEW) {
       this._eventEdit.onClickRenderEvent();
     }
+
+    const onEscKeyDown = (evt) => {
+      if (evt.key === KeyCode.ESCAPE || evt.key === KeyCode.ESC) {
+        if (mode === Mode.DEFAULT) {
+          this._onChangeView();
+          removeEventListener(`keydown`, onEscKeyDown);
+        } else if (mode === Mode.ADDING) {
+          unrender(currentView.getElement());
+          currentView.removeElement();
+        }
+        document.removeEventListener(`keydown`, onEscKeyDown);
+      }
+    };
   }
 
   setDefaultView() {
@@ -135,6 +129,7 @@ export default class PointController {
         .replaceChild(this._event.getElement(), this._eventEdit.getElement());
     }
   }
+
   static _getOffersInputFlag(evt) {
     const allOfferInputs = evt.target.querySelectorAll(`.event__offer-checkbox`);
     return Array.from(allOfferInputs)

@@ -26,6 +26,8 @@
     "chart.js": "^2.8.0",
     "chartjs-plugin-datalabels": "^0.7.0",
     "flatpickr": "4.6.2",
-    "moment": "^2.24.0"
+    "moment": "^2.24.0",
+    "node": "^12.11.0",
+    "static": "^2.0.0"
   }
 }

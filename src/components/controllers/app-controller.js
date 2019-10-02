@@ -4,8 +4,10 @@ import AbstractComponent from '../abstract-component';
 import Statistics from './../stats';
 import NavigationMenu from './../navigation-menu';
 import Filter from './../filter';
-import API from "../api";
+import API from '../api';
 import ModelEvent from "../model-event";
+import Models from '../Models';
+import Provider from '../provider';
 
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://htmlacademy-es-9.appspot.com/big-trip`;
@@ -13,9 +15,6 @@ const controlsContainer = document.querySelector(`.trip-main__trip-controls`);
 const tripEventsContainer = document.querySelector(`.trip-events`);
 
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
-
-let allDestinations;
-let allOffers;
 
 export default class AppController extends AbstractComponent {
   constructor() {
@@ -26,16 +25,18 @@ export default class AppController extends AbstractComponent {
   init() {
     this.tripController = new TripController(tripEventsContainer, this.onDataChange);
     this.tripController.renderLoadingPlug();
+    this.models = new Models();
+    this._provider = new Provider();
     api.getDestinations()
       .then((destinations) => {
-        allDestinations = destinations;
+        this.models.destinations = destinations;
       })
       .then(() => api.getOffers()
         .then((offers) => {
-          allOffers = offers;
+          this.models.offers = offers;
         }))
       .then(() => api.getEvents()
-        .then((events) => this.tripController.setEvents(events))
+        .then((events) => this.tripController.setEvents(events, this.models))
         .then(() => this.tripController.unRenderLoadingPlug())
         .then(() => this._renderTrip()));
   }
@@ -50,7 +51,7 @@ export default class AppController extends AbstractComponent {
           id: events.id,
           data: ModelEvent.toRAW(events),
         }).then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -63,7 +64,7 @@ export default class AppController extends AbstractComponent {
         api.deleteEvent({
           id: events.id,
         }).then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -77,7 +78,7 @@ export default class AppController extends AbstractComponent {
           data: ModelEvent.toRAW(events),
         }).then(() => element.stopCreatingNewEvent())
           .then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -117,6 +118,12 @@ export default class AppController extends AbstractComponent {
     render(controlsContainer, this._navigationMenu.getElement());
   }
 
+  _activateTab(tabTitle) {
+    this._navigationMenu.getElement().querySelector(`.trip-tabs__btn--active`).classList.remove(`trip-tabs__btn--active`);
+    const menuTabs = this._navigationMenu.getElement().querySelectorAll(`.trip-tabs__btn`);
+    menuTabs[[...menuTabs].findIndex((tab) => tab.textContent === tabTitle)].classList.add(`trip-tabs__btn--active`);
+  }
+
   _onClickMenuSwitch(evt) {
     if (evt.target.tagName !== `A` && evt.target.tagName !== `Button`) {
       return;
@@ -134,12 +141,6 @@ export default class AppController extends AbstractComponent {
         this._statistics.hide();
         break;
     }
-  }
-
-  _activateTab(tabTitle) {
-    this._navigationMenu.getElement().querySelector(`.trip-tabs__btn--active`).classList.remove(`trip-tabs__btn--active`);
-    const menuTabs = this._navigationMenu.getElement().querySelectorAll(`.trip-tabs__btn`);
-    menuTabs[[...menuTabs].findIndex((tab) => tab.textContent === tabTitle)].classList.add(`trip-tabs__btn--active`);
   }
 
   _onClickFilterSwitch(evt) {
@@ -162,4 +163,3 @@ export default class AppController extends AbstractComponent {
     }
   }
 }
-export {allDestinations, allOffers};

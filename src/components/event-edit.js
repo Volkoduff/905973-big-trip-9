@@ -1,5 +1,4 @@
 import {render, unrender, capitalizeFirstLetter, TRANSFER_EVENTS, ACTIVITY_EVENTS, EventToPretext, Position} from './utils';
-import {allDestinations, allOffers} from './controllers/app-controller';
 import AbstractComponent from './abstract-component';
 import EventIcon from './event-icon';
 import EventPlaceholder from './event-placeholder';
@@ -11,11 +10,12 @@ import "flatpickr/dist/themes/light.css";
 import moment from "moment";
 
 export default class EventEdit extends AbstractComponent {
-  constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, sort) {
+  constructor({event, startTime, endTime, price, destination, offers, id, isFavorite}, sort, models) {
     super();
     this._event = event;
     this._destination = destination;
     this._offers = offers;
+    this._models = models;
     this._startTime = startTime;
     this._endTime = endTime;
     this._price = price;
@@ -28,7 +28,7 @@ export default class EventEdit extends AbstractComponent {
 
   init() {
     const startInput = this.getElement().querySelector(`input[name="event-start-time"]`);
-    let startFlatpickr = flatpickr(startInput, {
+    const startFlatpickr = flatpickr(startInput, {
       allowInput: false,
       defaultDate: this._event.dueDate,
       enableTime: true,
@@ -41,7 +41,7 @@ export default class EventEdit extends AbstractComponent {
     });
 
     const endInput = this.getElement().querySelector(`input[name="event-end-time"]`);
-    let endFlatpickr = flatpickr(endInput, {
+    const endFlatpickr = flatpickr(endInput, {
       allowInput: false,
       defaultDate: this._event.dueDate,
       enableTime: true,
@@ -65,7 +65,7 @@ export default class EventEdit extends AbstractComponent {
 
   onchangeDestination(evt) {
     this._getProperContext();
-    this._destination = allDestinations
+    this._destination = this._models.destinations
       .filter((destination) => destination.name === evt.target.value)[0];
     this._renderDescription();
   }
@@ -82,7 +82,6 @@ export default class EventEdit extends AbstractComponent {
       container = document.querySelector(`.trip-events`);
       unrender(noPointsElement);
     }
-
     this._createNewEventForm(container);
     EventEdit._disableAddNewButton(true);
   }
@@ -90,14 +89,6 @@ export default class EventEdit extends AbstractComponent {
   changeDeleteButtonText(text) {
     this.getElement().querySelector(`.event__reset-btn`)
       .textContent = text;
-  }
-
-  _createNewEventForm(container) {
-
-    this.newForm = this.getElement().querySelector(`form`);
-    this.newForm.classList.add(`trip-events__item`);
-    this._displayAsNewEvent();
-    render(container, this.newForm, Position.AFTER);
   }
 
   lock() {
@@ -113,6 +104,22 @@ export default class EventEdit extends AbstractComponent {
   }
   shake() {
     this._getCurrentForm().classList.add(`shake`);
+  }
+
+  stopCreatingNewEvent() {
+    this._isEventCreating = false;
+    this._hideNewEventDetails();
+    unrender(this.newForm);
+    EventEdit._disableAddNewButton(false);
+  }
+
+  _createNewEventForm(container) {
+    this.newForm = this.getElement().querySelector(`form`);
+    this.newForm.classList.add(`trip-events__item`);
+    this.newForm.querySelector(`.event__favorite-btn`).remove();
+    this.newForm.querySelector(`.event__rollup-btn`).remove();
+    this._displayAsNewEvent();
+    render(container, this.newForm, Position.AFTER);
   }
 
   _shakeRemove() {
@@ -132,28 +139,10 @@ export default class EventEdit extends AbstractComponent {
         input.disabled = flag;
       });
   }
-
-  static _blockSaveButton(flag) {
-    const saveButton = document.querySelector(`.event__save-btn`);
-    saveButton.disabled = flag;
-  }
-
-  static _disableAddNewButton(flag) {
-    const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
-    addNewButton.disabled = flag;
-  }
-
   _transformDeleteButton() {
     const deleteButton = this.getElement().querySelector(`.event__reset-btn`);
     deleteButton.textContent = `Cancel`;
     deleteButton.addEventListener(`click`, (evt) => this.stopCreatingNewEvent(evt));
-  }
-
-  stopCreatingNewEvent() {
-    this._isEventCreating = false;
-    this._hideNewEventDetails();
-    unrender(this.newForm);
-    EventEdit._disableAddNewButton(false);
   }
 
   _hideNewEventDetails() {
@@ -162,16 +151,10 @@ export default class EventEdit extends AbstractComponent {
     const eventTypeButton = this.newForm.querySelector(`.event__type-btn`);
     eventTypeButton.addEventListener(`click`, () => EventEdit.show(eventDetails));
   }
-
   _displayAsNewEvent() {
     this._transformDeleteButton();
     this._hideNewEventDetails();
   }
-
-  static show(element) {
-    element.classList.remove(`visually-hidden`);
-  }
-
   _getProperContext() {
     if (this._isEventCreating) {
       this._form = this.newForm;
@@ -202,7 +185,7 @@ export default class EventEdit extends AbstractComponent {
     unrender(offersWrap);
     const detailsSection = this._form.querySelector(`.event__details`);
     if (this._event !== `transport` && this._event !== `sightseeing`) {
-      const offers = new EventOffers(this._event, allOffers, this._id);
+      const offers = new EventOffers(this._event, this._models.offers, this._id);
       render(detailsSection, offers.getElement(), Position.BEGIN);
     }
   }
@@ -219,11 +202,24 @@ export default class EventEdit extends AbstractComponent {
     const description = new DestinationDescription(this._destination);
     render(detailsSection, description.getElement());
   }
-
   _inputNumbersOnly() {
     this._getCurrentForm().querySelector(`.event__input--price`).addEventListener(`input`, (evt) => {
       evt.target.value = evt.target.value.replace(/[^\d]/g, ``);
     });
+  }
+
+  static show(element) {
+    element.classList.remove(`visually-hidden`);
+  }
+
+  static _blockSaveButton(flag) {
+    const saveButton = document.querySelector(`.event__save-btn`);
+    saveButton.disabled = flag;
+  }
+
+  static _disableAddNewButton(flag) {
+    const addNewButton = document.querySelector(`.trip-main__event-add-btn`);
+    addNewButton.disabled = flag;
   }
 
   getTemplate() {
@@ -264,7 +260,7 @@ export default class EventEdit extends AbstractComponent {
            list="destination-list-${this._id}"
            value="${this._destination.name !== undefined ? this._destination.name : ``}">
           <datalist id="destination-list-${this._id}">
-          ${allDestinations.map((destination) => `<option value="${destination.name}"></option>`).join(``)}
+          ${this._models.destinations.map((destination) => `<option value="${destination.name}"></option>`).join(``)}
           </datalist>
         </div>
 
