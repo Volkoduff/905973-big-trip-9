@@ -1,10 +1,10 @@
-import {allOffers} from './controllers/app-controller';
 import AbstractComponent from './abstract-component';
 
 export default class EventOffers extends AbstractComponent {
-  constructor(event, index) {
+  constructor(event, allOffers, index) {
     super();
     this._event = event;
+    this._allOffers = allOffers;
     this._id = index;
   }
 
@@ -12,7 +12,7 @@ export default class EventOffers extends AbstractComponent {
     return `<section class="event__section  event__section--offers">
 <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 <div class="event__available-offers">
-      ${allOffers
+      ${this._allOffers
             .filter((offerObjects) => offerObjects.type === this._event)
             .map((offersObject) => offersObject.offers
               .map((offer) => `<div class="event__offer-selector">

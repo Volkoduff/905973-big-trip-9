@@ -4,8 +4,11 @@ import AbstractComponent from '../abstract-component';
 import Statistics from './../stats';
 import NavigationMenu from './../navigation-menu';
 import Filter from './../filter';
-import API from "../api";
+import API from '../api';
 import ModelEvent from "../model-event";
+import Models from '../Models';
+import Provider from '../provider';
+import Store from '../store';
 
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://htmlacademy-es-9.appspot.com/big-trip`;
@@ -13,9 +16,8 @@ const controlsContainer = document.querySelector(`.trip-main__trip-controls`);
 const tripEventsContainer = document.querySelector(`.trip-events`);
 
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
-
-let allDestinations;
-let allOffers;
+const store = new Store({storage: localStorage});
+const provider = new Provider({api, store});
 
 export default class AppController extends AbstractComponent {
   constructor() {
@@ -26,16 +28,17 @@ export default class AppController extends AbstractComponent {
   init() {
     this.tripController = new TripController(tripEventsContainer, this.onDataChange);
     this.tripController.renderLoadingPlug();
-    api.getDestinations()
+    this.models = new Models();
+    provider.getDestinations()
       .then((destinations) => {
-        allDestinations = destinations;
+        this.models.destinations = destinations;
       })
-      .then(() => api.getOffers()
+      .then(() => provider.getOffers()
         .then((offers) => {
-          allOffers = offers;
+          this.models.offers = offers;
         }))
-      .then(() => api.getEvents()
-        .then((events) => this.tripController.setEvents(events))
+      .then(() => provider.getEvents()
+        .then((events) => this.tripController.setEvents(events, this.models))
         .then(() => this.tripController.unRenderLoadingPlug())
         .then(() => this._renderTrip()));
   }
@@ -46,11 +49,11 @@ export default class AppController extends AbstractComponent {
       case Action.UPDATE:
         element.lock();
         element.changeSaveButtonText(ButtonText.SAVING);
-        api.updateEvent({
+        provider.updateEvent({
           id: events.id,
           data: ModelEvent.toRAW(events),
-        }).then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+        }).then(() => provider.getEvents())
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -60,10 +63,10 @@ export default class AppController extends AbstractComponent {
       case Action.DELETE:
         element.lock();
         element.changeDeleteButtonText(ButtonText.DELETING);
-        api.deleteEvent({
+        provider.deleteEvent({
           id: events.id,
-        }).then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+        }).then(() => provider.getEvents())
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -73,11 +76,11 @@ export default class AppController extends AbstractComponent {
       case Action.CREATE:
         element.lock();
         element.changeSaveButtonText(ButtonText.SAVING);
-        api.createEvent({
+        provider.createEvent({
           data: ModelEvent.toRAW(events),
         }).then(() => element.stopCreatingNewEvent())
-          .then(() => api.getEvents())
-          .then((data) => this.tripController.setEvents(data))
+          .then(() => provider.getEvents())
+          .then((data) => this.tripController.setEvents(data, this.models))
           .catch(() => {
             element.unLock();
             element.shake();
@@ -117,6 +120,12 @@ export default class AppController extends AbstractComponent {
     render(controlsContainer, this._navigationMenu.getElement());
   }
 
+  _activateTab(tabTitle) {
+    this._navigationMenu.getElement().querySelector(`.trip-tabs__btn--active`).classList.remove(`trip-tabs__btn--active`);
+    const menuTabs = this._navigationMenu.getElement().querySelectorAll(`.trip-tabs__btn`);
+    menuTabs[[...menuTabs].findIndex((tab) => tab.textContent === tabTitle)].classList.add(`trip-tabs__btn--active`);
+  }
+
   _onClickMenuSwitch(evt) {
     if (evt.target.tagName !== `A` && evt.target.tagName !== `Button`) {
       return;
@@ -135,13 +144,6 @@ export default class AppController extends AbstractComponent {
         break;
     }
   }
-
-  _activateTab(tabTitle) {
-    this._navigationMenu.getElement().querySelector(`.trip-tabs__btn--active`).classList.remove(`trip-tabs__btn--active`);
-    const menuTabs = this._navigationMenu.getElement().querySelectorAll(`.trip-tabs__btn`);
-    menuTabs[[...menuTabs].findIndex((tab) => tab.textContent === tabTitle)].classList.add(`trip-tabs__btn--active`);
-  }
-
   _onClickFilterSwitch(evt) {
     if (evt.target.tagName !== `LABEL`) {
       return;
@@ -161,5 +163,8 @@ export default class AppController extends AbstractComponent {
         break;
     }
   }
+
+  static syncTasks() {
+    provider.syncEvents();
+  }
 }
-export {allDestinations, allOffers};

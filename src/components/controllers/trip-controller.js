@@ -1,5 +1,4 @@
 import {render, unrender, RenderSortMode, Mode, Position, FilterName} from './../utils';
-import {allOffers} from './../controllers/app-controller';
 import DaysList from './../days-list';
 import EventsList from './../events-list';
 import Day from './../day';
@@ -32,8 +31,9 @@ export default class TripController {
     });
   }
 
-  setEvents(events) {
+  setEvents(events, models) {
     this._events = events;
+    this._models = models;
     this._subscriptions = [];
     this._getDataMap();
     this._renderCurrentSorting();
@@ -104,19 +104,19 @@ export default class TripController {
     const newId = this._events.length;
     const defaultEvent = {
       destination: ``,
-      offers: allOffers[allOffers.findIndex((offers) => offers.type === `bus`)].offers,
+      offers: this._models.offers[this._models.offers.findIndex((offers) => offers.type === `bus`)].offers,
       startTime: moment().format(),
       endTime: moment().format(),
       id: newId,
       price: ``,
       event: `bus`,
     };
-    this._creatingCard = new PointController(this._container, defaultEvent, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW);
+    this._creatingCard = new PointController(this._container, defaultEvent, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.ADD_NEW, this._models);
     this._onChangeView();
   }
 
   _renderEvent(event, container) {
-    this.pointController = new PointController(container, event, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT);
+    this.pointController = new PointController(container, event, this._onDataChange, this._onChangeView, this._eventsList, this._sort, this.onDeleteCheck.bind(this), Mode.DEFAULT, this._models);
     this._subscriptions.push(this.pointController.setDefaultView.bind(this.pointController));
   }
 

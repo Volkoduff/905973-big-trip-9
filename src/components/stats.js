@@ -75,23 +75,6 @@ export default class Statistics extends AbstractComponent {
       }
     }
   }
-
-  static _getEventLabels(labelsPerSum) {
-    return labelsPerSum.map((el) => el.type.toUpperCase());
-  }
-
-  static _getEventSums(labelsPerSum) {
-    return labelsPerSum.map((el) => el.sum);
-  }
-
-  static _getEventIterations(labelsPerSum) {
-    return labelsPerSum.map((el) => el.count);
-  }
-
-  static _getSpentTime(labelsPerSum) {
-    return labelsPerSum.map((el) => el.durationSum);
-  }
-
   _createMoneyChart() {
     const moneyCtx = this.getElement().querySelector(`.statistics__chart--money`);
     if (this.moneyChart !== undefined) {
@@ -339,6 +322,22 @@ export default class Statistics extends AbstractComponent {
         }
       }
     });
+  }
+
+  static _getEventLabels(labelsPerSum) {
+    return labelsPerSum.map((el) => el.type.toUpperCase());
+  }
+
+  static _getEventSums(labelsPerSum) {
+    return labelsPerSum.map((el) => el.sum);
+  }
+
+  static _getEventIterations(labelsPerSum) {
+    return labelsPerSum.map((el) => el.count);
+  }
+
+  static _getSpentTime(labelsPerSum) {
+    return labelsPerSum.map((el) => el.durationSum);
   }
 
   getTemplate() {
