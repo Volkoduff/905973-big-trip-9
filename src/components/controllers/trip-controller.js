@@ -101,13 +101,11 @@ export default class TripController {
   }
 
   _getDefaultEvent() {
-    const newId = this._events.length;
     const defaultEvent = {
       destination: ``,
       offers: this._models.offers[this._models.offers.findIndex((offers) => offers.type === `bus`)].offers,
       startTime: moment().format(),
       endTime: moment().format(),
-      id: newId,
       price: ``,
       event: `bus`,
     };

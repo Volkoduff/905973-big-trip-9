@@ -10,14 +10,13 @@ export default class Store {
   }
 
   removeItem(storeKey, {key}) {
-    const items = this.getAll();
+    const items = this.getAll(storeKey);
     delete items[key];
-
     this._storage.setItem(storeKey, JSON.stringify(items));
   }
 
-  getItem({key}) {
-    const items = this.getAll();
+  getItem(storeKey, {key}) {
+    const items = this.getAll(storeKey);
     return items[key];
   }
 

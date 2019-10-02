@@ -30,6 +30,7 @@ export default class ModelEvent {
 
   static toRAW(data) {
     return {
+      'id': data.id ? data.id : null,
       'base_price': data.price,
       'date_from': moment(data.startTime).toISOString(),
       'date_to': moment(data.endTime).toISOString(),

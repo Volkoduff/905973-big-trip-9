@@ -27,10 +27,21 @@ self.addEventListener(`install`, (evt) => {
 });
 
 self.addEventListener(`fetch`, (evt) => {
-  if(!evt.request.url.includes("picsum.photos")) {
+  if(!evt.request.url.includes(`picsum.photos`)) {
     evt.respondWith(
       caches.match(evt.request)
-        .then((response) => response ? response : fetch(evt.request))
+        .then((response) => {
+          if (response) {
+            return response;
+          } else {
+            return fetch(evt.request)
+              .then((response) => {
+                caches.open(CACHE_NAME)
+                  .then((cache) => cache.put(evt.request, response.clone()));
+                return response.clone();
+              });
+          }
+        })
         .catch((err) => console.error({err}))
     )};
 });
