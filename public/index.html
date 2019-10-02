@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Big Trip</title>
-
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
   </head>
@@ -47,6 +46,15 @@
           </section>
       </div>
     </main>
+    <script>
+      navigator.serviceWorker.register(`./sw.js`)
+        .then((reg) => {
+          console.log(`Registration succeeded. Scope is ${reg.scope}`);
+        })
+        .catch((error) => {
+          console.log(`Registration failed with ${error}`);
+        });
+    </script>
     <script type="text/javascript" src="bundle.js"></script>
   </body>
 </html>

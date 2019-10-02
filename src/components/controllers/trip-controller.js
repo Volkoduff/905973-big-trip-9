@@ -1,5 +1,4 @@
 import {render, unrender, RenderSortMode, Mode, Position, FilterName} from './../utils';
-import {allOffers} from './../controllers/app-controller';
 import DaysList from './../days-list';
 import EventsList from './../events-list';
 import Day from './../day';
@@ -34,7 +33,6 @@ export default class TripController {
 
   setEvents(events, models) {
     this._events = events;
-    debugger
     this._models = models;
     this._subscriptions = [];
     this._getDataMap();
